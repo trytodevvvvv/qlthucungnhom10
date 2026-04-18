@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Danh sách Khách Hàng</h2>
+    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Khách Hàng</button>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên KH</th>
+                <th>SĐT</th>
+                <th>Hạng thẻ</th>
+                <th>Thú cưng thuộc sỡ hữu</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in customers %}
+            <tr>
+                <td>#{{ c.id }}</td>
+                <td><strong>{{ c.name }}</strong></td>
+                <td>{{ c.phone }}</td>
+                <td><span style="background: var(--secondary); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">{{ c.tier }}</span></td>
+                <td>{{ c.pets.count() }} <i class="fa-solid fa-paw"></i></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

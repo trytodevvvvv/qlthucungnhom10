@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Danh sách Thú Cưng</h2>
+    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng</button>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên Pet</th>
+                <th>Loài & Giống</th>
+                <th>Chủ sở hữu</th>
+                <th>Cân nặng</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pet in pets %}
+            <tr>
+                <td>#{{ pet.id }}</td>
+                <td><strong>{{ pet.name }}</strong></td>
+                <td>{{ pet.species }} ({{ pet.breed }})</td>
+                <td>{{ pet.owner.name }}</td>
+                <td>{{ pet.weight }} kg</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

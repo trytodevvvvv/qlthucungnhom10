@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Shop Management</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+                <i class="fa-solid fa-paw"></i> PetShop Pro
+            </a>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i> Tổng quan
+                </a>
+                <a href="{{ url_for('pets.list_customers') }}" class="nav-item {% if request.endpoint == 'pets.list_customers' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i> Khách hàng
+                </a>
+                <a href="{{ url_for('pets.list_pets') }}" class="nav-item {% if request.endpoint == 'pets.list_pets' %}active{% endif %}">
+                    <i class="fa-solid fa-dog"></i> Thú cưng
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="user-menu">
+                    <span>Xin chào, <strong>{{ current_user.username }}</strong></span>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-primary" style="margin-left: 16px;">Đăng xuất</a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

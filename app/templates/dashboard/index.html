@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Tổng Quan (Dashboard)</h2>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+    <div class="card" style="border-left: 4px solid var(--primary);">
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Khách hàng</h3>
+        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--primary-dark);">
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Thú cưng</h3>
+        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+    </div>
+    <div class="card" style="border-left: 4px solid #4CAF50;">
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Lịch Spa Hôm Nay</h3>
+        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+    </div>
+</div>
+{% endblock %}
