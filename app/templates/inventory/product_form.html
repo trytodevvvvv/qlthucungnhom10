@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>{% if product %}Cập nhật Sản Phẩm{% else %}Thêm Sản Phẩm{% endif %}</h2>
+    <a href="{{ url_for('inventory.list_products') }}" class="btn" style="background: #eee;">Quay lại</a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <form method="POST" action="">
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tên Sản Phẩm <span style="color: red;">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ product.name if product else '' }}" required>
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Mã SKU</label>
+                <input type="text" name="sku" class="form-control" value="{{ product.sku if product else '' }}">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Danh mục <span style="color: red;">*</span></label>
+                <select name="category_id" class="form-control" required>
+                    <option value="">-- Chọn danh mục --</option>
+                    {% for c in categories %}
+                    <option value="{{ c.id }}" {% if product and product.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Note: The user can add categories via database/seed for now -->
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 16px;">
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giá bán (VNĐ) <span style="color: red;">*</span></label>
+                <input type="number" name="price" class="form-control" value="{{ product.price if product else '0' }}" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giá vốn (VNĐ)</label>
+                <input type="number" name="cost" class="form-control" value="{{ product.cost if product else '0' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số lượng tồn kho</label>
+            <input type="number" name="stock_quantity" class="form-control" value="{{ product.stock_quantity if product else '0' }}">
+        </div>
+
+        <div style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Lưu Sản Phẩm</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

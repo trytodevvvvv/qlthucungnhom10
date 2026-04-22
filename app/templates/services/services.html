@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Danh sách Dịch Vụ</h2>
+    <a href="{{ url_for('services.add_service') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Dịch
+        Vụ</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên Dịch Vụ</th>
+                <th>Phân loại</th>
+                <th>Thời lượng (phút)</th>
+                <th>Đơn giá</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in services %}
+            <tr>
+                <td><strong>{{ s.name }}</strong></td>
+                <td>{{ s.category.name if s.category else '--' }}</td>
+                <td>{{ s.duration_minutes }}</td>
+                <td>{{ "{:,.0f}".format(s.price) }} VNĐ</td>
+                <td>
+                    {% if s.is_active %}
+                    <span style="padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; background: #d4edda; color: #155724;">
+                        Đang cung cấp
+                    </span>
+                    {% else %}
+                    <span style="padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; background: #f8d7da; color: #721c24;">
+                        Ngừng
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('services.edit_service', id=s.id) }}" class="btn"
+                        style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('services.delete_service', id=s.id) }}" method="POST"
+                        style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa dịch vụ này?');">
+                        <button type="submit" class="btn"
+                            style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có dịch vụ nào</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

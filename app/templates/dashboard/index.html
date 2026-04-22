@@ -5,18 +5,122 @@
     <h2>Tổng Quan (Dashboard)</h2>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-    <div class="card" style="border-left: 4px solid var(--primary);">
-        <h3 style="color: var(--text-muted); font-size: 1rem;">Khách hàng</h3>
-        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+<!-- Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    <div class="card" style="border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 16px;">
+        <div style="background: #fff0f0; color: var(--primary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <i class="fa-solid fa-money-bill-trend-up"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Tổng doanh thu</h3>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ "{:,.0f}".format(total_revenue) }}đ</p>
+        </div>
     </div>
-    <div class="card" style="border-left: 4px solid var(--primary-dark);">
-        <h3 style="color: var(--text-muted); font-size: 1rem;">Thú cưng</h3>
-        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+    <div class="card" style="border-left: 4px solid #4CAF50; display: flex; align-items: center; gap: 16px;">
+        <div style="background: #e8f5e9; color: #4CAF50; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Lịch hẹn đang chờ</h3>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ pending_bookings }}</p>
+        </div>
     </div>
-    <div class="card" style="border-left: 4px solid #4CAF50;">
-        <h3 style="color: var(--text-muted); font-size: 1rem;">Lịch Spa Hôm Nay</h3>
-        <p style="font-size: 2rem; font-weight: 700; margin-top: 8px;">0</p>
+    <div class="card" style="border-left: 4px solid var(--secondary); display: flex; align-items: center; gap: 16px;">
+        <div style="background: #fff8e1; color: var(--secondary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Khách hàng</h3>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ customer_count }}</p>
+        </div>
+    </div>
+    <div class="card" style="border-left: 4px solid #2196F3; display: flex; align-items: center; gap: 16px;">
+        <div style="background: #e3f2fd; color: #2196F3; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            <i class="fa-solid fa-dog"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Thú cưng</h3>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ pet_count }}</p>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Recent Orders -->
+    <div>
+        <div class="card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem; font-weight: 600;">Hóa đơn gần đây</h3>
+                <a href="#" style="font-size: 0.85rem; color: var(--primary);">Xem tất cả</a>
+            </div>
+            <table class="table" style="font-size: 0.95rem;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Khách hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.customer.name if order.customer else 'Khách vãng lai' }}</td>
+                        <td style="font-weight: 600;">{{ "{:,.0f}".format(order.total_amount) }}đ</td>
+                        <td style="color: var(--text-muted);">{{ order.created_at.strftime('%H:%M %d/%m') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; color: var(--text-muted);">Chưa có đơn hàng nào</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card" style="padding: 24px; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem; font-weight: 600;">Lịch hẹn sắp tới</h3>
+            </div>
+            <table class="table" style="font-size: 0.9rem;">
+                <tbody>
+                    {% for b in upcoming_bookings %}
+                    <tr>
+                        <td><strong>{{ b.booking_time.strftime('%H:%M %d/%m') }}</strong></td>
+                        <td>{{ b.pet.name }} ({{ b.customer.name }})</td>
+                        <td>{{ b.service.name }}</td>
+                        <td>
+                            <span style="padding: 2px 6px; border-radius: 4px; background: #eee; font-size: 0.8rem;">{{ b.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div>
+        <div class="card" style="background: #fff5f5; border: 1px solid #ffcccc; padding: 20px;">
+            <h3 style="font-size: 1rem; color: #d32f2f; margin-bottom: 12px;"><i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo kho hàng</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for p in low_stock_products %}
+                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ffdfdf; font-size: 0.9rem;">
+                    <span>{{ p.name }}</span>
+                    <strong style="color: #d32f2f;">SL: {{ p.stock_quantity }}</strong>
+                </li>
+                {% else %}
+                <li style="color: #4CAF50; font-size: 0.9rem;">Hệ thống kho ổn định.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+            <h3 style="font-size: 1rem; margin-bottom: 12px;">Doanh thu tháng này</h3>
+            <p style="font-size: 1.8rem; font-weight: 700; color: #4CAF50;">{{ "{:,.0f}".format(monthly_revenue) }}đ</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">So với tháng trước: <span style="color: #4CAF50;">+0%</span></p>
+        </div>
     </div>
 </div>
 {% endblock %}

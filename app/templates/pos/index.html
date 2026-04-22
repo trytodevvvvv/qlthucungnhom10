@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; gap: 24px;">
+    <!-- Bên trái: Danh sách Sản phẩm và Dịch vụ -->
+    <div style="flex: 2;">
+        <h2>Bán hàng (POS)</h2>
+        <div style="margin-top: 16px;">
+            <h3>Sản phẩm</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                {% for p in products %}
+                <div class="card item-card" style="width: 140px; cursor: pointer; text-align: center; padding: 16px;" 
+                     data-type="product" data-id="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ p.price }}"
+                     onclick="handleAddToCart(this)">
+                    <div style="font-size: 1.5rem; color: var(--primary);"><i class="fa-solid fa-box"></i></div>
+                    <div style="font-weight: 500; margin-top: 8px; font-size: 0.9rem;">{{ p.name }}</div>
+                    <div style="color: var(--primary-dark); font-weight: bold; margin-top: 4px;">{{ "{:,.0f}".format(p.price) }}đ</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Tồn: {{ p.stock_quantity }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="margin-top: 32px;">
+            <h3>Dịch vụ Spa / Tỉa lông</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                {% for s in services %}
+                <div class="card item-card" style="width: 140px; cursor: pointer; text-align: center; padding: 16px;"
+                     data-type="service" data-id="{{ s.id }}" data-name="{{ s.name }}" data-price="{{ s.price }}"
+                     onclick="handleAddToCart(this)">
+                    <div style="font-size: 1.5rem; color: var(--secondary);"><i class="fa-solid fa-scissors"></i></div>
+                    <div style="font-weight: 500; margin-top: 8px; font-size: 0.9rem;">{{ s.name }}</div>
+                    <div style="color: var(--primary-dark); font-weight: bold; margin-top: 4px;">{{ "{:,.0f}".format(s.price) }}đ</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bên phải: Hóa đơn (Giỏ hàng) -->
+    <div class="card" style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+        <h3>Hóa đơn</h3>
+        
+        <div style="flex: 1; min-height: 300px; max-height: 400px; overflow-y: auto; margin-top: 16px; border: 1px solid var(--border); padding: 8px; border-radius: var(--radius-sm);">
+            <div style="text-align: center; color: var(--text-muted); margin-top: 24px;" id="empty-cart-msg">Chưa có sản phẩm nào</div>
+            <div id="cart-items">
+                <!-- Items sẽ chèn vào đây -->
+            </div>
+        </div>
+
+        <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+                <span>Tổng cộng:</span>
+                <span id="total-price" style="color: var(--primary-dark);">0đ</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('pos.checkout') }}" style="margin-top: 24px;">
+            <input type="hidden" name="cart_data" id="cart_data" value="[]">
+            
+            <div class="form-group">
+                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Khách hàng (Không bắt buộc)</label>
+                <select name="customer_id" class="form-control" style="padding: 8px;">
+                    <option value="">Khách vãng lai</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}">{{ c.name }} ({{ c.phone }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Phương thức thanh toán</label>
+                <select name="payment_method" class="form-control" style="padding: 8px;">
+                    <option value="Cash">Tiền mặt</option>
+                    <option value="Banking">Chuyển khoản / QR Code</option>
+                    <option value="Card">Quẹt thẻ (POS)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 16px;" id="btn-checkout" disabled>Thanh Toán</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .item-card { transition: transform 0.1s, box-shadow 0.1s; border: 1px solid var(--border); }
+    .item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed var(--border); }
+    .cart-item-info { flex: 1; font-size: 0.9rem; }
+    .cart-item-qty { width: 40px; text-align: center; border: 1px solid var(--border); border-radius: 4px; outline: none; }
+</style>
+
+<script>
+    let cart = [];
+
+    function handleAddToCart(element) {
+        const type = element.getAttribute('data-type');
+        const id = parseInt(element.getAttribute('data-id'));
+        const name = element.getAttribute('data-name');
+        const price = parseFloat(element.getAttribute('data-price'));
+        addToCart(type, id, name, price);
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        const emptyMsg = document.getElementById('empty-cart-msg');
+        const totalSpan = document.getElementById('total-price');
+        const cartInput = document.getElementById('cart_data');
+        const btnCheckout = document.getElementById('btn-checkout');
+
+        if (cart.length === 0) {
+            emptyMsg.style.display = 'block';
+            container.innerHTML = '';
+            totalSpan.textContent = '0đ';
+            cartInput.value = '[]';
+            btnCheckout.disabled = true;
+            return;
+        }
+
+        emptyMsg.style.display = 'none';
+        container.innerHTML = '';
+        let total = 0;
+
+        cart.forEach((item, index) => {
+            total += item.price * item.quantity;
+            
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="cart-item-info">
+                    <div style="font-weight: 500;">${item.name}</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">${(item.price).toLocaleString()}đ</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="number" class="cart-item-qty" min="1" value="${item.quantity}" onchange="updateQty(${index}, this.value)">
+                    <button type="button" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f; margin-left:8px;" onclick="removeFromCart(${index})"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        totalSpan.textContent = total.toLocaleString() + 'đ';
+        cartInput.value = JSON.stringify(cart);
+        btnCheckout.disabled = false;
+    }
+
+    function addToCart(type, id, name, price) {
+        const existingItem = cart.find(i => i.type === type && i.id === id);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ type, id, name, price, quantity: 1 });
+        }
+        updateCartUI();
+    }
+
+    function updateQty(index, newQty) {
+        let val = parseInt(newQty);
+        if (isNaN(val) || val < 1) val = 1;
+        cart[index].quantity = val;
+        updateCartUI();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+    }
+</script>
+{% endblock %}

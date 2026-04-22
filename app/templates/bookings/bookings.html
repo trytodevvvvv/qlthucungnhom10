@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Lịch hẹn / Lịch làm việc</h2>
+    <a href="{{ url_for('bookings.add_booking') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Lịch Hẹn</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Thời gian</th>
+                <th>Khách hàng</th>
+                <th>Thú cưng</th>
+                <th>Dịch vụ</th>
+                <th>Nhân viên phụ trách</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td><strong>{{ b.booking_time.strftime('%H:%M %d/%m/%Y') }}</strong></td>
+                <td>{{ b.customer.name }} ({{ b.customer.phone }})</td>
+                <td>{{ b.pet.name }}</td>
+                <td>{{ b.service.name }}</td>
+                <td>{{ b.employee.username if b.employee else 'Chưa sắp xếp' }}</td>
+                <td>
+                    {% if b.status == 'Pending' %}
+                        <span style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Chờ xử lý</span>
+                    {% elif b.status == 'Confirmed' %}
+                        <span style="background: #cce5ff; color: #004085; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đã xác nhận</span>
+                    {% elif b.status == 'In Progress' %}
+                        <span style="background: #e2e3e5; color: #383d41; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đang làm</span>
+                    {% elif b.status == 'Completed' %}
+                        <span style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Hoàn thành</span>
+                    {% elif b.status == 'Cancelled' %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đã hủy</span>
+                    {% else %}
+                        {{ b.status }}
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('bookings.edit_booking', id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Chi tiết</a>
+                    <form action="{{ url_for('bookings.delete_booking', id=b.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy/xóa lịch này?');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted);">Chưa có lịch hẹn nào</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

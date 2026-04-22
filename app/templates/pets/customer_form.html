@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>{% if customer %}Cập nhật Khách Hàng{% else %}Thêm Khách Hàng{% endif %}</h2>
+    <a href="{{ url_for('pets.list_customers') }}" class="btn" style="background: #eee;">Quay lại</a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <form method="POST" action="">
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tên Khách Hàng <span style="color: red;">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ customer.name if customer else '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số điện thoại <span style="color: red;">*</span></label>
+            <input type="text" name="phone" class="form-control" value="{{ customer.phone if customer else '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Địa chỉ</label>
+            <input type="text" name="address" class="form-control" value="{{ customer.address if customer else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Hạng thẻ</label>
+            <select name="tier" class="form-control">
+                <option value="Standard" {% if customer and customer.tier == 'Standard' %}selected{% endif %}>Standard</option>
+                <option value="Silver" {% if customer and customer.tier == 'Silver' %}selected{% endif %}>Silver</option>
+                <option value="Gold" {% if customer and customer.tier == 'Gold' %}selected{% endif %}>Gold</option>
+                <option value="VIP" {% if customer and customer.tier == 'VIP' %}selected{% endif %}>VIP</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Lưu Khách Hàng</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

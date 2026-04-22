@@ -3,7 +3,7 @@
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h2>Danh sách Khách Hàng</h2>
-    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Khách Hàng</button>
+    <a href="{{ url_for('pets.add_customer') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Khách Hàng</a>
 </div>
 
 <div class="card">
@@ -15,6 +15,7 @@
                 <th>SĐT</th>
                 <th>Hạng thẻ</th>
                 <th>Thú cưng thuộc sỡ hữu</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -25,10 +26,16 @@
                 <td>{{ c.phone }}</td>
                 <td><span style="background: var(--secondary); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">{{ c.tier }}</span></td>
                 <td>{{ c.pets.count() }} <i class="fa-solid fa-paw"></i></td>
+                <td>
+                    <a href="{{ url_for('pets.edit_customer', id=c.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('pets.delete_customer', id=c.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này? (Thú cưng của họ cũng sẽ bị xóa)');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
             </tr>
             {% endfor %}
         </tbody>

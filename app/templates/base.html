@@ -30,6 +30,18 @@
                 <a href="{{ url_for('pets.list_pets') }}" class="nav-item {% if request.endpoint == 'pets.list_pets' %}active{% endif %}">
                     <i class="fa-solid fa-dog"></i> Thú cưng
                 </a>
+                <a href="{{ url_for('inventory.list_products') }}" class="nav-item {% if 'inventory.' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-box-open"></i> Hàng hóa
+                </a>
+                <a href="{{ url_for('services.list_services') }}" class="nav-item {% if 'services.' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-scissors"></i> Dịch vụ
+                </a>
+                <a href="{{ url_for('bookings.list_bookings') }}" class="nav-item {% if 'bookings.' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-check"></i> Đặt lịch hẹn
+                </a>
+                <a href="{{ url_for('pos.index') }}" class="nav-item {% if 'pos.' in request.endpoint %}active{% endif %}" style="margin-top: 16px; background: #ffe5e5; color: #d32f2f;">
+                    <i class="fa-solid fa-cash-register"></i> Bán hàng (POS)
+                </a>
             </nav>
         </aside>
 

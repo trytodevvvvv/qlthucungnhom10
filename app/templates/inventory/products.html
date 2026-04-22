@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Danh sách Sản Phẩm</h2>
+    <a href="{{ url_for('inventory.add_product') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Mã SKU</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Giá bán</th>
+                <th>Tồn kho</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr>
+                <td>{{ p.sku }}</td>
+                <td><strong>{{ p.name }}</strong></td>
+                <td>{{ p.category.name if p.category else '--' }}</td>
+                <td>{{ "{:,.0f}".format(p.price) }} VNĐ</td>
+                <td>
+                    <span {% if p.stock_quantity <= 5 %}style="color: red; font-weight: bold;"{% endif %}>
+                        {{ p.stock_quantity }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('inventory.edit_product', id=p.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('inventory.delete_product', id=p.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có sản phẩm nào.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

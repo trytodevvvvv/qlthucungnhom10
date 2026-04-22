@@ -3,7 +3,7 @@
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h2>Danh sách Thú Cưng</h2>
-    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng</button>
+    <a href="{{ url_for('pets.add_pet') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng</a>
 </div>
 
 <div class="card">
@@ -15,6 +15,7 @@
                 <th>Loài & Giống</th>
                 <th>Chủ sở hữu</th>
                 <th>Cân nặng</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -24,11 +25,17 @@
                 <td><strong>{{ pet.name }}</strong></td>
                 <td>{{ pet.species }} ({{ pet.breed }})</td>
                 <td>{{ pet.owner.name }}</td>
-                <td>{{ pet.weight }} kg</td>
+                <td>{% if pet.weight %}{{ pet.weight }} kg{% else %}--{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('pets.edit_pet', id=pet.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('pets.delete_pet', id=pet.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa thú cưng này?');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có dữ liệu</td>
             </tr>
             {% endfor %}
         </tbody>
