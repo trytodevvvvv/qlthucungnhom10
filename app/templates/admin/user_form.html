@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>{{ 'Chỉnh sửa' if user else 'Thêm mới' }} Tài khoản</h2>
+    <a href="{{ url_for('admin.list_users') }}" class="btn" style="background: #eee;">Quay lại</a>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="POST">
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tên đăng nhập {% if not user %}<span style="color: red;">*</span>{% endif %}</label>
+            {% if user %}
+            <input type="text" name="username" class="form-control" value="{{ user.username }}" readonly style="background: #f5f5f5;" required>
+            {% else %}
+            <input type="text" name="username" class="form-control" value="" required>
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+                Mật khẩu <span style="color: red;">*</span>
+            </label>
+            {% if user %}
+            <input type="text" name="password" class="form-control" value="{{ user.plain_password or '' }}" placeholder="Nhập mật khẩu mới để thay đổi">
+            {% else %}
+            <input type="text" name="password" class="form-control" required placeholder="Nhập mật khẩu">
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Họ và tên</label>
+            <input type="text" name="full_name" class="form-control" value="{{ user.full_name if user and user.full_name else '' }}" placeholder="Ví dụ: Nguyễn Văn A">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ user.email if user and user.email else '' }}" placeholder="email@example.com">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số điện thoại</label>
+            <input type="text" name="phone" class="form-control" value="{{ user.phone if user and user.phone else '' }}" placeholder="0912 345 678">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Quyền hạn <span style="color: red;">*</span></label>
+            {% if user and user.username == 'admin' %}
+            <input type="text" class="form-control" value="Quản trị viên / Chủ cửa hàng" readonly style="background: #f5f5f5;">
+            <input type="hidden" name="role" value="admin">
+            <small style="color: #666; font-style: italic;">* Không thể thay đổi quyền hạn của tài khoản quản trị gốc.</small>
+            {% else %}
+            <select name="role" id="role-select" class="form-control" required style="padding: 10px;">
+                <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Quản trị viên / Chủ cửa hàng</option>
+                <option value="receptionist" {% if user and user.role == 'receptionist' %}selected{% endif %}>Nhân viên thu ngân / Lễ tân</option>
+                <option value="staff" {% if user and user.role == 'staff' %}selected{% endif %}>Nhân viên chăm sóc / Thú y</option>
+                <option value="customer" {% if user and user.role == 'customer' %}selected{% endif %}>Khách hàng</option>
+            </select>
+            {% endif %}
+        </div>
+        
+        <!-- Thông tin khách hàng bổ sung - chỉ hiện khi chọn role = customer -->
+        {% if user and user.role == 'customer' %}
+        <div id="customer-info-section" style="display: block;">
+        {% else %}
+        <div id="customer-info-section" style="display: none;">
+        {% endif %}
+            <div style="border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; background: #fafafa; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 16px 0; color: #333; font-size: 0.95rem;">
+                    <i class="fa-solid fa-address-card" style="color: var(--primary); margin-right: 6px;"></i>
+                    Thông tin hồ sơ khách hàng
+                </h4>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem;">Địa chỉ</label>
+                    <input type="text" name="address" class="form-control" 
+                           value="{{ user.customer_profile.address if user and user.customer_profile else '' }}" 
+                           placeholder="123 Đường ABC, Quận XYZ">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem;">Hạng thẻ</label>
+                    <select name="tier" class="form-control" style="padding: 10px;">
+                        {% set current_tier = user.customer_profile.tier if user and user.customer_profile else 'Standard' %}
+                        <option value="Standard" {% if current_tier == 'Standard' %}selected{% endif %}>Standard</option>
+                        <option value="Silver" {% if current_tier == 'Silver' %}selected{% endif %}>Silver (Bạc)</option>
+                        <option value="Gold" {% if current_tier == 'Gold' %}selected{% endif %}>Gold (Vàng)</option>
+                        <option value="Platinum" {% if current_tier == 'Platinum' %}selected{% endif %}>Platinum (Bạch kim)</option>
+                        <option value="Diamond" {% if current_tier == 'Diamond' %}selected{% endif %}>Diamond (Kim cương)</option>
+                        <option value="VIP" {% if current_tier == 'VIP' %}selected{% endif %}>VIP</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        {% if user %}
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px; margin-bottom: 24px;">
+            {% if user.username == 'admin' %}
+            <input type="checkbox" checked disabled style="width: 18px; height: 18px;">
+            <label style="color: #666; font-weight: 500;">Tài khoản quản trị luôn luôn được kích hoạt</label>
+            {% else %}
+                {% if user.is_active %}
+                <input type="checkbox" name="is_active" id="is_active" checked style="width: 18px; height: 18px; cursor: pointer;">
+                {% else %}
+                <input type="checkbox" name="is_active" id="is_active" style="width: 18px; height: 18px; cursor: pointer;">
+                {% endif %}
+                <label for="is_active" style="cursor: pointer; font-weight: 500;">Cho phép tài khoản truy cập hệ thống</label>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 24px;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 600;">Lưu thông tin tài khoản</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('role-select').addEventListener('change', function() {
+    const section = document.getElementById('customer-info-section');
+    if (this.value === 'customer') {
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

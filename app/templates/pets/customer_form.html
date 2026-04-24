@@ -33,6 +33,20 @@
             </select>
         </div>
 
+        {% if customer and customer.user_account %}
+        <div style="border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; background: #f0f8f0; margin-top: 16px;">
+            <h4 style="margin: 0 0 8px 0; color: #2e7d32; font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i>
+                Tài khoản đăng nhập
+            </h4>
+            <div style="font-size: 0.9rem; color: #555;">
+                <strong>Tên đăng nhập:</strong> {{ customer.user_account.username }}
+                &nbsp;|&nbsp;
+                <strong>Mật khẩu:</strong> {{ customer.user_account.plain_password or '***' }}
+            </div>
+        </div>
+        {% endif %}
+
         <div style="margin-top: 24px;">
             <button type="submit" class="btn btn-primary" style="width: 100%;">Lưu Khách Hàng</button>
         </div>

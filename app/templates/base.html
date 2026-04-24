@@ -21,27 +21,70 @@
                 <i class="fa-solid fa-paw"></i> PetShop Pro
             </a>
             <nav class="sidebar-nav">
+                <!-- Chung cho nhân viên và admin -->
+                {% if current_user.role in ['admin', 'receptionist', 'staff', 'veterinarian', 'groomer'] %}
                 <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                     <i class="fa-solid fa-house"></i> Tổng quan
                 </a>
+                {% endif %}
+
+                <!-- Chỉ cho Admin và Lễ tân -->
+                {% if current_user.role in ['admin', 'receptionist'] %}
                 <a href="{{ url_for('pets.list_customers') }}" class="nav-item {% if request.endpoint == 'pets.list_customers' %}active{% endif %}">
                     <i class="fa-solid fa-users"></i> Khách hàng
                 </a>
+                {% endif %}
+
+                <!-- Cho Admin, Lễ tân và Nhân viên chăm sóc -->
+                {% if current_user.role in ['admin', 'receptionist', 'staff', 'veterinarian', 'groomer'] %}
                 <a href="{{ url_for('pets.list_pets') }}" class="nav-item {% if request.endpoint == 'pets.list_pets' %}active{% endif %}">
                     <i class="fa-solid fa-dog"></i> Thú cưng
                 </a>
+                {% endif %}
+
+                <!-- Chỉ cho Admin quản lý kho và dịch vụ -->
+                {% if current_user.role == 'admin' %}
                 <a href="{{ url_for('inventory.list_products') }}" class="nav-item {% if 'inventory.' in request.endpoint %}active{% endif %}">
                     <i class="fa-solid fa-box-open"></i> Hàng hóa
                 </a>
                 <a href="{{ url_for('services.list_services') }}" class="nav-item {% if 'services.' in request.endpoint %}active{% endif %}">
                     <i class="fa-solid fa-scissors"></i> Dịch vụ
                 </a>
+                {% endif %}
+
+                <!-- Lễ tân và Nhân viên chăm sóc xem lịch hẹn -->
+                {% if current_user.role in ['admin', 'receptionist', 'staff', 'veterinarian', 'groomer'] %}
                 <a href="{{ url_for('bookings.list_bookings') }}" class="nav-item {% if 'bookings.' in request.endpoint %}active{% endif %}">
                     <i class="fa-solid fa-calendar-check"></i> Đặt lịch hẹn
                 </a>
+                {% endif %}
+
+                <!-- POS chỉ dành cho Admin và Lễ tân -->
+                {% if current_user.role in ['admin', 'receptionist'] %}
                 <a href="{{ url_for('pos.index') }}" class="nav-item {% if 'pos.' in request.endpoint %}active{% endif %}" style="margin-top: 16px; background: #ffe5e5; color: #d32f2f;">
                     <i class="fa-solid fa-cash-register"></i> Bán hàng (POS)
                 </a>
+                {% endif %}
+
+                <!-- Khách hàng: Chỉ thấy các mục cá nhân -->
+                {% if current_user.role == 'customer' %}
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i> Trang chủ
+                </a>
+                <a href="{{ url_for('pets.list_pets') }}" class="nav-item {% if request.endpoint == 'pets.list_pets' %}active{% endif %}">
+                    <i class="fa-solid fa-dog"></i> Thú cưng của tôi
+                </a>
+                <a href="{{ url_for('bookings.list_bookings') }}" class="nav-item {% if 'bookings.' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-days"></i> Lịch hẹn của tôi
+                </a>
+                {% endif %}
+
+                {% if current_user.role == 'admin' %}
+                <div style="margin-top: 24px; padding: 0 16px; font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: bold;">Hệ thống</div>
+                <a href="{{ url_for('admin.list_users') }}" class="nav-item {% if 'admin.' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-user-shield"></i> Quản lý tài khoản
+                </a>
+                {% endif %}
             </nav>
         </aside>
 
@@ -60,7 +103,11 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                   {% if messages %}
                     {% for category, message in messages %}
-                      <div class="alert alert-{{ category }}">{{ message }}</div>
+                      <script>
+                          document.addEventListener('DOMContentLoaded', function() {
+                              showNotification("{{ message }}", "{{ category }}");
+                          });
+                      </script>
                     {% endfor %}
                   {% endif %}
                 {% endwith %}
@@ -69,5 +116,58 @@
             </div>
         </main>
     </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <style>
+        .notification {
+            background: white;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            border-left: 5px solid var(--primary);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success { border-left-color: #2e7d32; }
+        .notification.danger { border-left-color: #d32f2f; }
+        .notification.info { border-left-color: #1976d2; }
+    </style>
+
+    <script>
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            
+            let icon = 'fa-circle-info';
+            if (type === 'success') icon = 'fa-circle-check';
+            if (type === 'danger') icon = 'fa-circle-exclamation';
+            
+            notif.innerHTML = `
+                <i class="fa-solid ${icon}" style="font-size: 1.2rem;"></i>
+                <div style="flex: 1; font-weight: 500;">${message}</div>
+            `;
+            
+            container.appendChild(notif);
+            
+            // Slide in
+            setTimeout(() => notif.classList.add('show'), 100);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                notif.classList.remove('show');
+                setTimeout(() => notif.remove(), 400);
+            }, 4000);
+        }
+    </script>
 </body>
 </html>

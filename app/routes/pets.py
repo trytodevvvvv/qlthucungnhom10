@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from . import pets_bp
-from app.models import Customer, Pet
+from app.models import Customer, Pet, User
 from app.extensions import db
 
 @pets_bp.route('/customers')
@@ -21,9 +21,29 @@ def add_customer():
         
         new_customer = Customer(name=name, phone=phone, address=address, tier=tier)
         db.session.add(new_customer)
+        
         try:
+            db.session.flush()
+            
+            # Tự động tạo tài khoản đăng nhập cho khách hàng
+            # Username = SĐT, mật khẩu mặc định = 123456
+            username = phone
+            default_password = '123456'
+            
+            if not User.query.filter_by(username=username).first():
+                user = User(
+                    username=username,
+                    role='customer',
+                    full_name=name,
+                    phone=phone,
+                    customer_id=new_customer.id,
+                    plain_password=default_password
+                )
+                user.set_password(default_password)
+                db.session.add(user)
+            
             db.session.commit()
-            flash('Thêm khách hàng thành công!', 'success')
+            flash('Thêm khách hàng thành công! Tài khoản đăng nhập đã được tạo tự động.', 'success')
             return redirect(url_for('pets.list_customers'))
         except Exception as e:
             db.session.rollback()
@@ -40,6 +60,13 @@ def edit_customer(id):
         customer.phone = request.form.get('phone')
         customer.address = request.form.get('address')
         customer.tier = request.form.get('tier')
+        
+        # Đồng bộ thông tin sang tài khoản user nếu có
+        if customer.user_account:
+            customer.user_account.full_name = customer.name
+            email = request.form.get('email')
+            if email:
+                customer.user_account.email = email
         
         try:
             db.session.commit()
@@ -63,7 +90,11 @@ def delete_customer(id):
 @pets_bp.route('/pets')
 @login_required
 def list_pets():
-    pets = Pet.query.all()
+    query = Pet.query
+    if current_user.role == 'customer':
+        query = query.filter_by(customer_id=current_user.customer_id)
+    
+    pets = query.all()
     return render_template('pets/pets.html', pets=pets)
 
 @pets_bp.route('/pets/add', methods=['GET', 'POST'])

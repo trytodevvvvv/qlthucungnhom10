@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from . import services_bp
 from app.models import PetService, ServiceCategory
 from app.extensions import db
@@ -7,12 +7,18 @@ from app.extensions import db
 @services_bp.route('/services')
 @login_required
 def list_services():
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền truy cập vào danh mục dịch vụ!', 'danger')
+        return redirect(url_for('dashboard.index'))
     services = PetService.query.all()
     return render_template('services/services.html', services=services)
 
 @services_bp.route('/services/add', methods=['GET', 'POST'])
 @login_required
 def add_service():
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     categories = ServiceCategory.query.all()
     if request.method == 'POST':
         name = request.form.get('name')
@@ -42,6 +48,9 @@ def add_service():
 @services_bp.route('/services/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_service(id):
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     service = PetService.query.get_or_404(id)
     categories = ServiceCategory.query.all()
     if request.method == 'POST':
@@ -67,6 +76,9 @@ def edit_service(id):
 @services_bp.route('/services/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_service(id):
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     service = PetService.query.get_or_404(id)
     try:
         db.session.delete(service)

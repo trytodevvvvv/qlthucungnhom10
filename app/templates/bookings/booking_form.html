@@ -50,26 +50,15 @@
                 <select name="employee_id" class="form-control">
                     <option value="">-- Tùy chọn --</option>
                     {% for emp in employees %}
-                    <option value="{{ emp.id }}" {% if booking and booking.employee_id == emp.id %}selected{% endif %}>{{ emp.username }}</option>
+                    <option value="{{ emp.id }}" {% if booking and booking.employee_id == emp.id %}selected{% endif %}>{{ emp.full_name or emp.username }}</option>
                     {% endfor %}
                 </select>
             </div>
         </div>
 
         <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Trạng thái</label>
-            <select name="status" class="form-control">
-                <option value="Pending" {% if booking and booking.status == 'Pending' %}selected{% endif %}>Chờ xử lý</option>
-                <option value="Confirmed" {% if booking and booking.status == 'Confirmed' %}selected{% endif %}>Đã xác nhận</option>
-                <option value="In Progress" {% if booking and booking.status == 'In Progress' %}selected{% endif %}>Đang làm</option>
-                <option value="Completed" {% if booking and booking.status == 'Completed' %}selected{% endif %}>Hoàn thành</option>
-                <option value="Cancelled" {% if booking and booking.status == 'Cancelled' %}selected{% endif %}>Đã hủy</option>
-            </select>
-        </div>
-
-        <div class="form-group">
             <label style="display: block; margin-bottom: 8px; font-weight: 500;">Ghi chú thêm</label>
-            <textarea name="notes" class="form-control" style="height: 80px; resize: vertical;">{{ booking.notes if booking else '' }}</textarea>
+            <textarea name="notes" class="form-control" placeholder="Ghi chú thêm..." style="height: 100px; resize: vertical;">{{ booking.notes if booking else '' }}</textarea>
         </div>
 
         <div style="margin-top: 24px;">

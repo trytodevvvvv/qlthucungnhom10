@@ -25,28 +25,36 @@
                 <td><strong>{{ b.booking_time.strftime('%H:%M %d/%m/%Y') }}</strong></td>
                 <td>{{ b.customer.name }} ({{ b.customer.phone }})</td>
                 <td>{{ b.pet.name }}</td>
-                <td>{{ b.service.name }}</td>
-                <td>{{ b.employee.username if b.employee else 'Chưa sắp xếp' }}</td>
+                <td>{{ b.service.name }} ({{ "{:,.0f}".format(b.service.price) }}đ)</td>
+                <td>{{ b.employee.full_name or b.employee.username if b.employee else 'Chưa sắp xếp' }}</td>
                 <td>
-                    {% if b.status == 'Pending' %}
-                        <span style="background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Chờ xử lý</span>
-                    {% elif b.status == 'Confirmed' %}
-                        <span style="background: #cce5ff; color: #004085; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đã xác nhận</span>
-                    {% elif b.status == 'In Progress' %}
-                        <span style="background: #e2e3e5; color: #383d41; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đang làm</span>
-                    {% elif b.status == 'Completed' %}
-                        <span style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Hoàn thành</span>
-                    {% elif b.status == 'Cancelled' %}
-                        <span style="background: #f8d7da; color: #721c24; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">Đã hủy</span>
-                    {% else %}
-                        {{ b.status }}
-                    {% endif %}
+                    <div>
+                        {% if b.is_paid %}
+                            <span style="color: #2e7d32; font-size: 0.85rem; font-weight: 600; background: #e8f5e9; padding: 4px 10px; border-radius: 20px;"><i class="fa-solid fa-circle-check"></i> Đã thanh toán</span>
+                        {% else %}
+                            <span style="color: #d32f2f; font-size: 0.85rem; font-weight: 600; background: #ffebee; padding: 4px 10px; border-radius: 20px;"><i class="fa-solid fa-circle-xmark"></i> Chưa thanh toán</span>
+                        {% endif %}
+                    </div>
                 </td>
                 <td>
-                    <a href="{{ url_for('bookings.edit_booking', id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Chi tiết</a>
-                    <form action="{{ url_for('bookings.delete_booking', id=b.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy/xóa lịch này?');">
-                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
-                    </form>
+                    <div style="display: flex; gap: 4px;">
+                        {% if not b.is_paid %}
+                        <button type="button" class="btn btn-pay-booking" 
+                                style="padding: 4px 8px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32;"
+                                data-id="{{ b.id }}"
+                                data-service="{{ b.service.name }}"
+                                data-price="{{ b.service.price }}"
+                                data-customer="{{ b.customer.name if b.customer else 'Khách vãng lai' }}"
+                                data-customer-id="{{ b.customer_id or '' }}"
+                                data-tier="{{ b.customer.tier if b.customer else 'Standard' }}">
+                            Thanh toán
+                        </button>
+                        {% endif %}
+                        <a href="{{ url_for('bookings.edit_booking', id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Chi tiết</a>
+                        <form action="{{ url_for('bookings.delete_booking', id=b.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy/xóa lịch này?');">
+                            <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             {% else %}
@@ -57,4 +65,220 @@
         </tbody>
     </table>
 </div>
+
+<!-- Modal Thanh toán Lịch hẹn -->
+<div id="booking-payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 90%; max-width: 450px; padding: 24px; text-align: center; animation: slideDown 0.3s ease-out;">
+        <h3 style="margin-bottom: 8px;">Thanh toán dịch vụ</h3>
+        <p id="modal-service-name" style="font-weight: 500; color: #666; margin-bottom: 12px;"></p>
+        
+        <form id="payment-form" method="POST" action="">
+            <div id="booking-price-details" style="margin-bottom: 12px;">
+                <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark);" id="modal-total-display">0đ</div>
+            </div>
+            
+            <!-- Voucher Input -->
+            <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Mã giảm giá</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" name="coupon_code" id="booking_coupon_code" class="form-control" placeholder="Nhập mã..." style="padding: 8px;">
+                    <button type="button" class="btn" style="background: #eee; padding: 0 12px; font-size: 0.85rem;" onclick="applyBookingVoucher()">Áp dụng</button>
+                </div>
+                <div id="booking-voucher-msg" style="font-size: 0.75rem; margin-top: 4px; display: none;"></div>
+            </div>
+
+            <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Phương thức thanh toán</label>
+                <select name="payment_method" id="payment_method" class="form-control" style="padding: 10px;">
+                    <option value="Cash">Tiền mặt</option>
+                    <option value="Banking">Chuyển khoản / QR Code</option>
+                    <option value="Card">Quẹt thẻ (POS)</option>
+                </select>
+            </div>
+
+            <div id="qr-container" style="display: none; margin-bottom: 20px; background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px dashed #ccc;">
+                <img id="qr-image" src="" alt="QR Code" style="max-width: 180px; border-radius: 8px; margin-bottom: 8px;">
+                <div style="font-weight: 600; font-size: 0.9rem;">DANG BAO HUNG</div>
+                <div style="font-size: 0.85rem; color: #666;">STK: 0338484668 (MB Bank)</div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn" style="flex: 1; padding: 12px; background: #eee;" onclick="closeBookingPaymentModal()">Hủy</button>
+                <button type="submit" class="btn btn-primary" style="flex: 2; padding: 12px; font-weight: 600;" id="btn-confirm-payment">Xác nhận thanh toán</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<script>
+    let currentBookingTotal = 0;
+    let currentBookingDiscount = 0;
+    let currentCustomerId = null;
+
+    async function openBookingPaymentModal(id, serviceName, price, customerName, customerId, customerTier) {
+        const modal = document.getElementById('booking-payment-modal');
+        const form = document.getElementById('payment-form');
+        const serviceDisplay = document.getElementById('modal-service-name');
+        const totalDisplay = document.getElementById('modal-total-display');
+        
+        currentBookingTotal = price;
+        currentBookingDiscount = 0;
+        currentCustomerId = customerId;
+        
+        form.action = `/bookings/pay/${id}`;
+        serviceDisplay.innerText = `${serviceName} - Khách: ${customerName}`;
+        
+        // Reset voucher
+        document.getElementById('booking_coupon_code').value = '';
+        document.getElementById('booking-voucher-msg').style.display = 'none';
+        
+        // Tự động áp mã theo hạng thẻ
+        if (customerTier === 'Gold') {
+            await applyBookingVoucher('GOLD5');
+        } else if (customerTier === 'Platinum') {
+            await applyBookingVoucher('PLATINUM10');
+        } else if (customerTier === 'Diamond' || customerTier === 'VIP') {
+            await applyBookingVoucher('VIP20');
+        } else {
+            updateModalDisplay();
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    async function applyBookingVoucher(providedCode = null) {
+        const codeInput = document.getElementById('booking_coupon_code');
+        if (providedCode) codeInput.value = providedCode;
+        
+        const code = codeInput.value;
+        const msgDiv = document.getElementById('booking-voucher-msg');
+
+        if (!code) {
+            currentBookingDiscount = 0;
+            msgDiv.style.display = 'none';
+            updateModalDisplay();
+            return;
+        }
+
+        try {
+            const response = await fetch('/pos/apply_voucher', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    code: code, 
+                    customer_id: currentCustomerId, 
+                    order_amount: currentBookingTotal
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                currentBookingDiscount = data.discount_amount;
+                let percentText = data.discount_percent ? ` (${data.discount_percent}%)` : '';
+                msgDiv.innerText = `Đã áp dụng: Giảm ${currentBookingDiscount.toLocaleString()}đ${percentText}`;
+                msgDiv.style.color = '#2e7d32';
+                msgDiv.style.display = 'block';
+            } else {
+                currentBookingDiscount = 0;
+                msgDiv.innerText = data.message;
+                msgDiv.style.color = '#d32f2f';
+                msgDiv.style.display = 'block';
+            }
+            updateModalDisplay();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function updateModalDisplay() {
+        const detailsContainer = document.getElementById('booking-price-details');
+        const finalTotal = Math.max(0, currentBookingTotal - currentBookingDiscount);
+        
+        if (currentBookingDiscount > 0) {
+            detailsContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-bottom: 2px;">
+                    <span>Giá gốc:</span>
+                    <span>${currentBookingTotal.toLocaleString()}đ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #d32f2f; margin-bottom: 6px;">
+                    <span>Giảm giá:</span>
+                    <span>-${currentBookingDiscount.toLocaleString()}đ</span>
+                </div>
+                <div style="border-top: 1px dashed #eee; padding-top: 6px; display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: bold; color: var(--primary-dark);">
+                    <span>Tổng thu:</span>
+                    <span id="modal-total-display">${finalTotal.toLocaleString()}đ</span>
+                </div>
+            `;
+        } else {
+            detailsContainer.innerHTML = `
+                <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark);" id="modal-total-display">
+                    ${finalTotal.toLocaleString()}đ
+                </div>
+            `;
+        }
+        updateQR(finalTotal);
+    }
+
+    function closeBookingPaymentModal() {
+        document.getElementById('booking-payment-modal').style.display = 'none';
+    }
+
+    function updateQR(price) {
+        const method = document.getElementById('payment_method').value;
+        const qrContainer = document.getElementById('qr-container');
+        const qrImage = document.getElementById('qr-image');
+        const confirmBtn = document.getElementById('btn-confirm-payment');
+
+        if (method === 'Banking') {
+            const bankId = 'MB';
+            const accountNo = '0338484668';
+            const template = 'compact2';
+            const description = encodeURIComponent('Thanh toan dich vu PetShop');
+            const accountName = encodeURIComponent('DANG BAO HUNG');
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${price}&addInfo=${description}&accountName=${accountName}`;
+            
+            qrImage.src = qrUrl;
+            qrContainer.style.display = 'block';
+            confirmBtn.innerText = 'Xác nhận đã nhận tiền';
+        } else {
+            qrContainer.style.display = 'none';
+            confirmBtn.innerText = 'Xác nhận thanh toán';
+        }
+    }
+
+    document.getElementById('payment_method').addEventListener('change', function() {
+        const priceText = document.getElementById('modal-total-display').innerText;
+        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+        updateQR(price);
+    });
+
+    // Event listener for Pay buttons
+    document.querySelectorAll('.btn-pay-booking').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const serviceName = this.getAttribute('data-service');
+            const price = parseFloat(this.getAttribute('data-price'));
+            const customerName = this.getAttribute('data-customer');
+            const customerId = this.getAttribute('data-customer-id');
+            const customerTier = this.getAttribute('data-tier');
+            
+            openBookingPaymentModal(id, serviceName, price, customerName, customerId, customerTier);
+        });
+    });
+
+    // Close on click outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('booking-payment-modal');
+        if (event.target == modal) {
+            closeBookingPaymentModal();
+        }
+    }
+</script>
 {% endblock %}

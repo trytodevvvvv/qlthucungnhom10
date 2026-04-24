@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from . import inventory_bp
 from app.models import Product, Category
 from app.extensions import db
@@ -7,12 +7,18 @@ from app.extensions import db
 @inventory_bp.route('/products')
 @login_required
 def list_products():
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền truy cập vào kho hàng!', 'danger')
+        return redirect(url_for('dashboard.index'))
     products = Product.query.all()
     return render_template('inventory/products.html', products=products)
 
 @inventory_bp.route('/products/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     categories = Category.query.all()
     if request.method == 'POST':
         name = request.form.get('name')
@@ -44,6 +50,9 @@ def add_product():
 @inventory_bp.route('/products/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_product(id):
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     product = Product.query.get_or_404(id)
     categories = Category.query.all()
     if request.method == 'POST':
@@ -71,6 +80,9 @@ def edit_product(id):
 @inventory_bp.route('/products/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_product(id):
+    if current_user.role != 'admin':
+        flash('Bạn không có quyền thực hiện hành động này!', 'danger')
+        return redirect(url_for('dashboard.index'))
     product = Product.query.get_or_404(id)
     try:
         db.session.delete(product)

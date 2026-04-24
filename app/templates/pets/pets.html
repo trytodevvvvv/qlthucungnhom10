@@ -2,8 +2,10 @@
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2>Danh sách Thú Cưng</h2>
+    <h2>{% if current_user.role == 'customer' %}Thú cưng của tôi{% else %}Danh sách Thú Cưng{% endif %}</h2>
+    {% if current_user.role != 'customer' %}
     <a href="{{ url_for('pets.add_pet') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng</a>
+    {% endif %}
 </div>
 
 <div class="card">
@@ -27,10 +29,14 @@
                 <td>{{ pet.owner.name }}</td>
                 <td>{% if pet.weight %}{{ pet.weight }} kg{% else %}--{% endif %}</td>
                 <td>
+                    {% if current_user.role != 'customer' %}
                     <a href="{{ url_for('pets.edit_pet', id=pet.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
                     <form action="{{ url_for('pets.delete_pet', id=pet.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa thú cưng này?');">
                         <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
                     </form>
+                    {% else %}
+                    <span style="color: #999; font-size: 0.8rem;">Chỉ xem</span>
+                    {% endif %}
                 </td>
             </tr>
             {% else %}
