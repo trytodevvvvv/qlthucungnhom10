@@ -1,4 +1,5 @@
-from flask import Flask
+import logging
+from flask import Flask, request
 from config import Config
 from .extensions import db, migrate, login_manager
 from .models import User
@@ -12,6 +13,18 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    app.logger.info('PetShop Startup')
+
+    # Security Headers Middleware
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        return response
     
     # Register error handlers
     register_error_handlers(app)
