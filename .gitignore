@@ -15,14 +15,6 @@ __pycache__/
 .env
 
 # User requested exclusions
-uitest/
-reports/
-run.bat
-run.py
-seed.py
-config.py
-update_bookings.py
-update_db.py
 check_data.py
 migrate_pet_source.py
 
