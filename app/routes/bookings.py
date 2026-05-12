@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from datetime import datetime
 from . import bookings_bp
-from app.models import Booking, Customer, Pet, PetService, User, Order, OrderItem, Voucher
+from app.models import Booking, Customer, Pet, PetService, User, Order, OrderItem
 from app.extensions import db
 
 @bookings_bp.route('/bookings')
@@ -11,15 +11,12 @@ def list_bookings():
     query = Booking.query
     
     # Phân quyền xem lịch hẹn
-    if current_user.role == 'customer':
-        # Khách hàng chỉ xem lịch của chính mình
-        query = query.filter_by(customer_id=current_user.customer_id)
-    elif current_user.role in ['staff', 'veterinarian', 'groomer']:
+    if current_user.role in ['staff', 'veterinarian', 'groomer']:
         # Nhân viên chuyên môn xem lịch được phân công cho mình
         query = query.filter_by(employee_id=current_user.id)
     # admin và receptionist xem được tất cả
     
-    bookings = query.order_by(Booking.booking_time.asc()).all()
+    bookings = query.order_by(Booking.is_paid.asc(), Booking.booking_time.asc()).all()
     return render_template('bookings/bookings.html', bookings=bookings)
 
 @bookings_bp.route('/bookings/add', methods=['GET', 'POST'])
@@ -28,11 +25,11 @@ def add_booking():
     customers = Customer.query.all()
     pets = Pet.query.all()
     services = PetService.query.all()
-    employees = User.query.filter(User.role != 'customer').all()
+    employees = User.query.filter(User.role.in_(['admin', 'receptionist', 'staff', 'veterinarian', 'groomer'])).all()
     
     if request.method == 'POST':
-        customer_id = request.form.get('customer_id')
-        pet_id = request.form.get('pet_id')
+        customer_identifier = request.form.get('customer_identifier')
+        pet_name = request.form.get('pet_name')
         service_id = request.form.get('service_id')
         employee_id = request.form.get('employee_id')
         booking_time_str = request.form.get('booking_time')
@@ -40,6 +37,20 @@ def add_booking():
         is_paid = 'is_paid' in request.form
         
         try:
+            phone = customer_identifier.split(' - ')[0].strip() if customer_identifier else ''
+            customer = Customer.query.filter_by(phone=phone).first()
+            if not customer:
+                flash('Không tìm thấy khách hàng với số điện thoại này!', 'danger')
+                return redirect(request.url)
+                
+            pet = Pet.query.filter_by(customer_id=customer.id, name=pet_name).first()
+            if not pet:
+                flash('Không tìm thấy thú cưng của khách hàng này!', 'danger')
+                return redirect(request.url)
+                
+            customer_id = customer.id
+            pet_id = pet.id
+            
             booking_time = datetime.fromisoformat(booking_time_str) if booking_time_str else datetime.now()
             employee_id = employee_id if employee_id else None
             
@@ -73,10 +84,10 @@ def add_booking():
                     )
                     db.session.add(order_item)
                     
-                    # Cập nhật hạng khách hàng
+                    # Cập nhật tổng chi tiêu khách hàng
                     customer = Customer.query.get(customer_id)
                     if customer:
-                        customer.update_tier()
+                        customer.update_total_spent()
 
             db.session.commit()
             flash('Thêm lịch hẹn thành công!', 'success')
@@ -94,12 +105,26 @@ def edit_booking(id):
     customers = Customer.query.all()
     pets = Pet.query.all()
     services = PetService.query.all()
-    employees = User.query.filter(User.role != 'customer').all()
+    employees = User.query.filter(User.role.in_(['admin', 'receptionist', 'staff', 'veterinarian', 'groomer'])).all()
     
     if request.method == 'POST':
         old_is_paid = booking.is_paid
-        booking.customer_id = request.form.get('customer_id')
-        booking.pet_id = request.form.get('pet_id')
+        customer_identifier = request.form.get('customer_identifier')
+        pet_name = request.form.get('pet_name')
+        
+        phone = customer_identifier.split(' - ')[0].strip() if customer_identifier else ''
+        customer = Customer.query.filter_by(phone=phone).first()
+        if not customer:
+            flash('Không tìm thấy khách hàng với số điện thoại này!', 'danger')
+            return redirect(request.url)
+            
+        pet = Pet.query.filter_by(customer_id=customer.id, name=pet_name).first()
+        if not pet:
+            flash('Không tìm thấy thú cưng của khách hàng này!', 'danger')
+            return redirect(request.url)
+            
+        booking.customer_id = customer.id
+        booking.pet_id = pet.id
         booking.service_id = request.form.get('service_id')
         employee_id = request.form.get('employee_id')
         booking.employee_id = employee_id if employee_id else None
@@ -134,10 +159,10 @@ def edit_booking(id):
                     )
                     db.session.add(order_item)
                     
-                    # Cập nhật hạng khách hàng
+                    # Cập nhật tổng chi tiêu khách hàng
                     customer = Customer.query.get(booking.customer_id)
                     if customer:
-                        customer.update_tier()
+                        customer.update_total_spent()
 
             db.session.commit()
             flash('Cập nhật lịch hẹn thành công!', 'success')
@@ -166,31 +191,14 @@ def delete_booking(id):
 def pay_booking(id):
     booking = Booking.query.get_or_404(id)
     payment_method = request.form.get('payment_method', 'Cash')
-    coupon_code = request.form.get('coupon_code')
-    
     if booking.is_paid:
         flash('Lịch hẹn này đã được thanh toán rồi.', 'info')
         return redirect(url_for('bookings.list_bookings'))
         
     try:
         subtotal = booking.service.price
-        discount = 0
         
-        # Áp dụng mã giảm giá nếu có
-        if coupon_code and booking.customer:
-            voucher = Voucher.query.filter_by(code=coupon_code, is_active=True).first()
-            customer = booking.customer
-            if voucher:
-                allowed_tiers = ['Gold', 'Platinum', 'Diamond', 'VIP']
-                tier_priority = {'Standard': 0, 'Silver': 1, 'Gold': 2, 'Platinum': 3, 'Diamond': 4, 'VIP': 5}
-                if customer.tier in allowed_tiers and tier_priority.get(customer.tier, 0) >= tier_priority.get(voucher.min_tier, 2):
-                    if subtotal >= voucher.min_order_amount:
-                        if voucher.discount_type == 'fixed':
-                            discount = voucher.discount_amount
-                        else:
-                            discount = (voucher.discount_amount / 100) * subtotal
-        
-        total_amount = max(0, subtotal - discount)
+        total_amount = max(0, subtotal)
 
         # 1. Tạo hóa đơn POS
         new_order = Order(
@@ -215,12 +223,12 @@ def pay_booking(id):
         # 3. Cập nhật trạng thái lịch hẹn
         booking.is_paid = True
         
-        # 4. Cập nhật hạng khách hàng
+        # 4. Cập nhật tổng chi tiêu khách hàng
         if booking.customer:
-            booking.customer.update_tier()
+            booking.customer.update_total_spent()
             
         db.session.commit()
-        flash(f'Thanh toán thành công dịch vụ {booking.service.name}! (Giảm: {discount:,.0f}đ)', 'success')
+        flash(f'Thanh toán thành công dịch vụ {booking.service.name}!', 'success')
     except Exception as e:
         db.session.rollback()
         flash('Lỗi khi thanh toán: ' + str(e), 'danger')

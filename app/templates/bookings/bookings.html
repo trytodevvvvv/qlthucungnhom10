@@ -30,9 +30,9 @@
                 <td>
                     <div>
                         {% if b.is_paid %}
-                            <span style="color: #2e7d32; font-size: 0.85rem; font-weight: 600; background: #e8f5e9; padding: 4px 10px; border-radius: 20px;"><i class="fa-solid fa-circle-check"></i> Đã thanh toán</span>
+                            <span style="color: #2e7d32; font-size: 0.85rem; font-weight: 600; background: #e8f5e9; padding: 4px 10px; border-radius: 20px; white-space: nowrap;"><i class="fa-solid fa-circle-check"></i> Đã thanh toán</span>
                         {% else %}
-                            <span style="color: #d32f2f; font-size: 0.85rem; font-weight: 600; background: #ffebee; padding: 4px 10px; border-radius: 20px;"><i class="fa-solid fa-circle-xmark"></i> Chưa thanh toán</span>
+                            <span style="color: #d32f2f; font-size: 0.85rem; font-weight: 600; background: #ffebee; padding: 4px 10px; border-radius: 20px; white-space: nowrap;"><i class="fa-solid fa-circle-xmark"></i> Chưa thanh toán</span>
                         {% endif %}
                     </div>
                 </td>
@@ -40,19 +40,19 @@
                     <div style="display: flex; gap: 4px;">
                         {% if not b.is_paid %}
                         <button type="button" class="btn btn-pay-booking" 
-                                style="padding: 4px 8px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32;"
+                                style="padding: 4px 8px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; white-space: nowrap;"
                                 data-id="{{ b.id }}"
                                 data-service="{{ b.service.name }}"
                                 data-price="{{ b.service.price }}"
                                 data-customer="{{ b.customer.name if b.customer else 'Khách vãng lai' }}"
-                                data-customer-id="{{ b.customer_id or '' }}"
-                                data-tier="{{ b.customer.tier if b.customer else 'Standard' }}">
+                                data-customer-id="{{ b.customer_id or '' }}">
                             Thanh toán
                         </button>
+                        <a href="{{ url_for('pos.index', booking_id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; white-space: nowrap;">Chuyển POS</a>
                         {% endif %}
-                        <a href="{{ url_for('bookings.edit_booking', id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Chi tiết</a>
+                        <a href="{{ url_for('bookings.edit_booking', id=b.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee; white-space: nowrap;">Chi tiết</a>
                         <form action="{{ url_for('bookings.delete_booking', id=b.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy/xóa lịch này?');">
-                            <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                            <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f; white-space: nowrap;">Xóa</button>
                         </form>
                     </div>
                 </td>
@@ -77,15 +77,6 @@
                 <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark);" id="modal-total-display">0đ</div>
             </div>
             
-            <!-- Voucher Input -->
-            <div class="form-group" style="text-align: left; margin-bottom: 16px;">
-                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Mã giảm giá</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" name="coupon_code" id="booking_coupon_code" class="form-control" placeholder="Nhập mã..." style="padding: 8px;">
-                    <button type="button" class="btn" style="background: #eee; padding: 0 12px; font-size: 0.85rem;" onclick="applyBookingVoucher()">Áp dụng</button>
-                </div>
-                <div id="booking-voucher-msg" style="font-size: 0.75rem; margin-top: 4px; display: none;"></div>
-            </div>
 
             <div class="form-group" style="text-align: left; margin-bottom: 16px;">
                 <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Phương thức thanh toán</label>
@@ -119,110 +110,36 @@
 
 <script>
     let currentBookingTotal = 0;
-    let currentBookingDiscount = 0;
     let currentCustomerId = null;
 
-    async function openBookingPaymentModal(id, serviceName, price, customerName, customerId, customerTier) {
+    async function openBookingPaymentModal(id, serviceName, price, customerName, customerId) {
         const modal = document.getElementById('booking-payment-modal');
         const form = document.getElementById('payment-form');
         const serviceDisplay = document.getElementById('modal-service-name');
         const totalDisplay = document.getElementById('modal-total-display');
         
-        currentBookingTotal = price;
-        currentBookingDiscount = 0;
         currentCustomerId = customerId;
+        currentBookingTotal = price;
         
         form.action = `/bookings/pay/${id}`;
         serviceDisplay.innerText = `${serviceName} - Khách: ${customerName}`;
         
-        // Reset voucher
-        document.getElementById('booking_coupon_code').value = '';
-        document.getElementById('booking-voucher-msg').style.display = 'none';
-        
-        // Tự động áp mã theo hạng thẻ
-        if (customerTier === 'Gold') {
-            await applyBookingVoucher('GOLD5');
-        } else if (customerTier === 'Platinum') {
-            await applyBookingVoucher('PLATINUM10');
-        } else if (customerTier === 'Diamond' || customerTier === 'VIP') {
-            await applyBookingVoucher('VIP20');
-        } else {
-            updateModalDisplay();
-        }
+        updateModalDisplay();
         
         modal.style.display = 'flex';
     }
 
-    async function applyBookingVoucher(providedCode = null) {
-        const codeInput = document.getElementById('booking_coupon_code');
-        if (providedCode) codeInput.value = providedCode;
-        
-        const code = codeInput.value;
-        const msgDiv = document.getElementById('booking-voucher-msg');
 
-        if (!code) {
-            currentBookingDiscount = 0;
-            msgDiv.style.display = 'none';
-            updateModalDisplay();
-            return;
-        }
-
-        try {
-            const response = await fetch('/pos/apply_voucher', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    code: code, 
-                    customer_id: currentCustomerId, 
-                    order_amount: currentBookingTotal
-                })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                currentBookingDiscount = data.discount_amount;
-                let percentText = data.discount_percent ? ` (${data.discount_percent}%)` : '';
-                msgDiv.innerText = `Đã áp dụng: Giảm ${currentBookingDiscount.toLocaleString()}đ${percentText}`;
-                msgDiv.style.color = '#2e7d32';
-                msgDiv.style.display = 'block';
-            } else {
-                currentBookingDiscount = 0;
-                msgDiv.innerText = data.message;
-                msgDiv.style.color = '#d32f2f';
-                msgDiv.style.display = 'block';
-            }
-            updateModalDisplay();
-        } catch (e) {
-            console.error(e);
-        }
-    }
 
     function updateModalDisplay() {
         const detailsContainer = document.getElementById('booking-price-details');
-        const finalTotal = Math.max(0, currentBookingTotal - currentBookingDiscount);
+        const finalTotal = Math.max(0, currentBookingTotal);
         
-        if (currentBookingDiscount > 0) {
-            detailsContainer.innerHTML = `
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #666; margin-bottom: 2px;">
-                    <span>Giá gốc:</span>
-                    <span>${currentBookingTotal.toLocaleString()}đ</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #d32f2f; margin-bottom: 6px;">
-                    <span>Giảm giá:</span>
-                    <span>-${currentBookingDiscount.toLocaleString()}đ</span>
-                </div>
-                <div style="border-top: 1px dashed #eee; padding-top: 6px; display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: bold; color: var(--primary-dark);">
-                    <span>Tổng thu:</span>
-                    <span id="modal-total-display">${finalTotal.toLocaleString()}đ</span>
-                </div>
-            `;
-        } else {
-            detailsContainer.innerHTML = `
-                <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark);" id="modal-total-display">
-                    ${finalTotal.toLocaleString()}đ
-                </div>
-            `;
-        }
+        detailsContainer.innerHTML = `
+            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-dark);" id="modal-total-display">
+                ${finalTotal.toLocaleString()}đ
+            </div>
+        `;
         updateQR(finalTotal);
     }
 
@@ -267,9 +184,8 @@
             const price = parseFloat(this.getAttribute('data-price'));
             const customerName = this.getAttribute('data-customer');
             const customerId = this.getAttribute('data-customer-id');
-            const customerTier = this.getAttribute('data-tier');
             
-            openBookingPaymentModal(id, serviceName, price, customerName, customerId, customerTier);
+            openBookingPaymentModal(id, serviceName, price, customerName, customerId);
         });
     });
 

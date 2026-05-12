@@ -9,24 +9,31 @@
 <div class="card" style="max-width: 600px;">
     <form method="POST" action="">
         <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Khách hàng <span style="color: red;">*</span></label>
-            <select name="customer_id" class="form-control" required id="customer_select">
-                <option value="">-- Chọn khách hàng --</option>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+                Thông tin khách hàng <span style="color: red;">*</span>
+                <a href="{{ url_for('pets.add_customer') }}" target="_blank" style="float: right; font-size: 0.85rem; font-weight: normal; color: var(--primary);"><i class="fa-solid fa-plus"></i> Thêm KH mới</a>
+            </label>
+            <input type="text" name="customer_identifier" id="customer_identifier" list="customers_list" class="form-control" placeholder="Nhập tên khách hàng để tìm kiếm..." value="{{ booking.customer.phone ~ ' - ' ~ booking.customer.name if booking else '' }}" required autocomplete="off">
+            <datalist id="customers_list">
                 {% for c in customers %}
-                <option value="{{ c.id }}" {% if booking and booking.customer_id == c.id %}selected{% endif %}>{{ c.name }} ({{ c.phone }})</option>
+                <option value="{{ c.phone }} - {{ c.name }}"></option>
                 {% endfor %}
-            </select>
+            </datalist>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Có thể nhập tên để hệ thống tự gợi ý.</small>
         </div>
         
         <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Thú cưng <span style="color: red;">*</span></label>
-            <select name="pet_id" class="form-control" required id="pet_select">
-                <option value="">-- Chọn thú cưng --</option>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+                Tên thú cưng <span style="color: red;">*</span>
+                <a href="{{ url_for('pets.add_pet') }}" target="_blank" style="float: right; font-size: 0.85rem; font-weight: normal; color: var(--primary);"><i class="fa-solid fa-plus"></i> Thêm thú cưng mới</a>
+            </label>
+            <input type="text" name="pet_name" id="pet_name" list="pets_list" class="form-control" placeholder="Nhập tên thú cưng để tìm kiếm..." value="{{ booking.pet.name if booking else '' }}" required autocomplete="off">
+            <datalist id="pets_list">
                 {% for p in pets %}
-                <option value="{{ p.id }}" data-customer="{{ p.customer_id }}" {% if booking and booking.pet_id == p.id %}selected{% endif %}>{{ p.name }} - {{ p.species }}</option>
+                <option value="{{ p.name }}"></option>
                 {% endfor %}
-            </select>
-            <small style="color: var(--text-muted);">Note: Hiện tại hiển thị tất cả thú cưng.</small>
+            </datalist>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Hệ thống sẽ gợi ý tên thú cưng hiện có.</small>
         </div>
 
         <div class="form-group">
@@ -67,20 +74,46 @@
     </form>
 </div>
 
+
+</div>
+
 <script>
-    // Simple script to filter pets based on selected customer
-    document.getElementById('customer_select').addEventListener('change', function() {
-        const customerId = this.value;
-        const petOptions = document.querySelectorAll('#pet_select option[data-customer]');
-        
-        petOptions.forEach(opt => {
-            if (!customerId || opt.getAttribute('data-customer') === customerId) {
-                opt.style.display = 'block';
-            } else {
-                opt.style.display = 'none';
-            }
-        });
-        document.getElementById('pet_select').value = ""; // reset pet selection
+document.addEventListener('DOMContentLoaded', function() {
+    const customerInput = document.getElementById('customer_identifier');
+    const petsList = document.getElementById('pets_list');
+    
+    // Lưu lại danh sách thú cưng gốc
+    const originalPetsHTML = petsList.innerHTML;
+
+    function fetchPetsForCustomer(identifier) {
+        if (identifier && identifier.includes(' - ')) {
+            const phone = identifier.split(' - ')[0].trim();
+            fetch(`/api/pets_by_customer?phone=${encodeURIComponent(phone)}`)
+                .then(res => res.json())
+                .then(data => {
+                    petsList.innerHTML = '';
+                    data.forEach(petName => {
+                        const option = document.createElement('option');
+                        option.value = petName;
+                        petsList.appendChild(option);
+                    });
+                })
+                .catch(err => console.error('Lỗi khi lấy danh sách thú cưng:', err));
+        } else {
+            // Khôi phục lại toàn bộ thú cưng nếu không có khách hàng cụ thể
+            petsList.innerHTML = originalPetsHTML;
+        }
+    }
+
+    customerInput.addEventListener('change', function() {
+        fetchPetsForCustomer(this.value);
     });
+
+    // Chạy khi load trang nếu có sẵn dữ liệu khách hàng (Trường hợp sửa lịch hẹn)
+    if (customerInput.value) {
+        fetchPetsForCustomer(customerInput.value);
+    }
+});
 </script>
+
 {% endblock %}
