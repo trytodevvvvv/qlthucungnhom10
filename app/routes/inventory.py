@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from . import inventory_bp
-from app.models import Product, Category
+from app.models import Product, Category, PetForSale
 from app.extensions import db
 
 @inventory_bp.route('/products')
@@ -11,7 +11,8 @@ def list_products():
         flash('Bạn không có quyền truy cập vào kho hàng!', 'danger')
         return redirect(url_for('dashboard.index'))
     products = Product.query.all()
-    return render_template('inventory/products.html', products=products)
+    pets = PetForSale.query.all()
+    return render_template('inventory/products.html', products=products, pets=pets)
 
 @inventory_bp.route('/products/add', methods=['GET', 'POST'])
 @login_required
@@ -25,17 +26,15 @@ def add_product():
         sku = request.form.get('sku')
         category_id = request.form.get('category_id')
         price = request.form.get('price')
-        cost = request.form.get('cost')
         stock_quantity = request.form.get('stock_quantity')
         
         try:
             price = float(price) if price else 0.0
-            cost = float(cost) if cost else 0.0
             stock_quantity = int(stock_quantity) if stock_quantity else 0
             
             new_product = Product(
                 name=name, sku=sku, category_id=category_id, 
-                price=price, cost=cost, stock_quantity=stock_quantity
+                price=price, cost=0.0, stock_quantity=stock_quantity
             )
             db.session.add(new_product)
             db.session.commit()
@@ -60,12 +59,11 @@ def edit_product(id):
         product.sku = request.form.get('sku')
         product.category_id = request.form.get('category_id')
         price = request.form.get('price')
-        cost = request.form.get('cost')
         stock_quantity = request.form.get('stock_quantity')
         
         try:
             product.price = float(price) if price else 0.0
-            product.cost = float(cost) if cost else 0.0
+            product.cost = 0.0
             product.stock_quantity = int(stock_quantity) if stock_quantity else 0
             
             db.session.commit()

@@ -2,11 +2,74 @@
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2>Danh sách Sản Phẩm</h2>
-    <a href="{{ url_for('inventory.add_product') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
+    <h2>Quản lý Hàng hóa & Thú cưng</h2>
 </div>
 
-<div class="card">
+<!-- Tab Navigation -->
+<div style="display: flex; gap: 10px; border-bottom: 2px solid #eee; margin-bottom: 24px;">
+    <button class="tab-btn active" onclick="openTab(event, 'petsTab')" id="defaultOpen">
+        <i class="fa-solid fa-cat"></i> Thú cưng bán
+    </button>
+    <button class="tab-btn" onclick="openTab(event, 'productsTab')">
+        <i class="fa-solid fa-box"></i> Sản phẩm & Phụ kiện
+    </button>
+</div>
+
+<!-- Tab 1: Pets -->
+<div id="petsTab" class="tab-content card" style="display: block;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 1.1rem;">Danh sách Thú cưng đang bán</h3>
+        <a href="{{ url_for('pet_sales.add_pet') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng</a>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tên thú cưng</th>
+                <th>Loài / Giống</th>
+                <th>Tuổi / SL</th>
+                <th>Giá bán</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pet in pets %}
+            <tr>
+                <td><strong>{{ pet.name }}</strong></td>
+                <td>{{ pet.species }} - {{ pet.breed }}</td>
+                <td>{{ pet.age or '--' }} <br> <span style="font-size: 0.8rem; color: #666;">SL: {{ pet.quantity }}</span></td>
+                <td style="font-weight: 500; color: var(--primary-dark);">{{ "{:,.0f}".format(pet.price) }}đ</td>
+                <td>
+                    {% if pet.status == 'Available' %}
+                    <span style="color: #2e7d32; font-weight: 500; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Đang bán</span>
+                    {% else %}
+                    <span style="color: #666; font-weight: 500; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Đã bán</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('pet_sales.edit_pet', pet_id=pet.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('pet_sales.delete_pet', pet_id=pet.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa thú cưng này?');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có thú cưng nào.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Tab 2: Products -->
+<div id="productsTab" class="tab-content card" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 1.1rem;">Danh sách Sản phẩm & Phụ kiện</h3>
+        <a href="{{ url_for('inventory.add_product') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
+    </div>
+
     <table class="table">
         <thead>
             <tr>
@@ -24,7 +87,7 @@
                 <td>{{ p.sku }}</td>
                 <td><strong>{{ p.name }}</strong></td>
                 <td>{{ p.category.name if p.category else '--' }}</td>
-                <td>{{ "{:,.0f}".format(p.price) }} VNĐ</td>
+                <td>{{ "{:,.0f}".format(p.price) }}đ</td>
                 <td>
                     <span {% if p.stock_quantity <= 5 %}style="color: red; font-weight: bold;"{% endif %}>
                         {{ p.stock_quantity }}
@@ -45,4 +108,66 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #666;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover {
+        color: var(--primary);
+    }
+    .tab-btn.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+        font-weight: 600;
+    }
+    .tab-content {
+        animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+        
+        // Luôn lưu lại tab đang xem
+        localStorage.setItem('activeInventoryTab', tabName);
+    }
+
+    // Tự động mở lại tab cuối cùng hoặc mặc định
+    document.addEventListener("DOMContentLoaded", function() {
+        let activeTab = localStorage.getItem('activeInventoryTab');
+        if (activeTab && document.getElementById(activeTab)) {
+            // giả lập event click
+            document.querySelector(`button[onclick*="${activeTab}"]`).click();
+        } else {
+            document.getElementById("defaultOpen").click();
+        }
+    });
+</script>
 {% endblock %}

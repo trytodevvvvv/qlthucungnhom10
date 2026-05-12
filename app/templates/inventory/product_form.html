@@ -36,14 +36,9 @@
                 <input type="number" name="price" class="form-control" value="{{ product.price if product else '0' }}" required>
             </div>
             <div class="form-group" style="flex: 1;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giá vốn (VNĐ)</label>
-                <input type="number" name="cost" class="form-control" value="{{ product.cost if product else '0' }}">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số lượng tồn kho</label>
+                <input type="number" name="stock_quantity" class="form-control" value="{{ product.stock_quantity if product else '0' }}">
             </div>
-        </div>
-
-        <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số lượng tồn kho</label>
-            <input type="number" name="stock_quantity" class="form-control" value="{{ product.stock_quantity if product else '0' }}">
         </div>
 
         <div style="margin-top: 24px;">
