@@ -2,6 +2,7 @@ from flask import Flask
 from config import Config
 from .extensions import db, migrate, login_manager
 from .models import User
+from .errors import register_error_handlers
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -11,6 +12,9 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    
+    # Register error handlers
+    register_error_handlers(app)
 
     @login_manager.user_loader
     def load_user(user_id):
