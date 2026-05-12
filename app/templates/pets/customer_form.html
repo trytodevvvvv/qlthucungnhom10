@@ -23,15 +23,7 @@
             <input type="text" name="address" class="form-control" value="{{ customer.address if customer else '' }}">
         </div>
 
-        <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Hạng thẻ</label>
-            <select name="tier" class="form-control">
-                <option value="Standard" {% if customer and customer.tier == 'Standard' %}selected{% endif %}>Standard</option>
-                <option value="Silver" {% if customer and customer.tier == 'Silver' %}selected{% endif %}>Silver</option>
-                <option value="Gold" {% if customer and customer.tier == 'Gold' %}selected{% endif %}>Gold</option>
-                <option value="VIP" {% if customer and customer.tier == 'VIP' %}selected{% endif %}>VIP</option>
-            </select>
-        </div>
+
 
         {% if customer and customer.user_account %}
         <div style="border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; background: #f0f8f0; margin-top: 16px;">

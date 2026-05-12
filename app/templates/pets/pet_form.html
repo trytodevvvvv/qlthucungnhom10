@@ -9,13 +9,14 @@
 <div class="card" style="max-width: 600px;">
     <form method="POST" action="">
         <div class="form-group">
-            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Chủ sở hữu <span style="color: red;">*</span></label>
-            <select name="customer_id" class="form-control" required>
-                <option value="">-- Chọn khách hàng --</option>
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Thông tin khách hàng <span style="color: red;">*</span></label>
+            <input type="text" name="customer_identifier" list="customers_list" class="form-control" placeholder="Nhập tên khách hàng để tìm kiếm..." value="{{ pet.owner.phone ~ ' - ' ~ pet.owner.name if pet else '' }}" required autocomplete="off">
+            <datalist id="customers_list">
                 {% for c in customers %}
-                <option value="{{ c.id }}" {% if pet and pet.customer_id == c.id %}selected{% endif %}>{{ c.name }} ({{ c.phone }})</option>
+                <option value="{{ c.phone }} - {{ c.name }}"></option>
                 {% endfor %}
-            </select>
+            </datalist>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Có thể nhập tên để hệ thống tự gợi ý.</small>
         </div>
 
         <div class="form-group">
@@ -26,7 +27,15 @@
         <div style="display: flex; gap: 16px;">
             <div class="form-group" style="flex: 1;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500;">Loài (Chó/Mèo...)</label>
-                <input type="text" name="species" class="form-control" value="{{ pet.species if pet else '' }}">
+                <select name="species" class="form-control">
+                    <option value="">-- Chọn loài --</option>
+                    <option value="Chó" {% if pet and pet.species == 'Chó' %}selected{% endif %}>Chó</option>
+                    <option value="Mèo" {% if pet and pet.species == 'Mèo' %}selected{% endif %}>Mèo</option>
+                    <option value="Chuột Hamster" {% if pet and pet.species == 'Chuột Hamster' %}selected{% endif %}>Chuột Hamster</option>
+                    <option value="Thỏ" {% if pet and pet.species == 'Thỏ' %}selected{% endif %}>Thỏ</option>
+                    <option value="Chim" {% if pet and pet.species == 'Chim' %}selected{% endif %}>Chim</option>
+                    <option value="Khác" {% if pet and pet.species and pet.species not in ['Chó', 'Mèo', 'Chuột Hamster', 'Thỏ', 'Chim'] %}selected{% endif %}>Khác</option>
+                </select>
             </div>
             <div class="form-group" style="flex: 1;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giống</label>

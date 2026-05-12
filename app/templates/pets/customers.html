@@ -3,6 +3,9 @@
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <h2>Danh sách Khách Hàng</h2>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="customerSearch" class="form-control" placeholder="Tìm kiếm khách hàng..." style="width: 250px; padding: 8px 12px; border: 1px solid #ddd; border-radius: var(--radius-sm);">
+    </div>
 </div>
 
 <div class="card">
@@ -12,9 +15,10 @@
                 <th>ID</th>
                 <th>Tên KH</th>
                 <th>SĐT</th>
-                <th>Hạng thẻ</th>
-                <th>Thú cưng thuộc sở hữu</th>
-                <th>Tài khoản</th>
+                <th>Thú cưng (Spa/DV)</th>
+                <th>Thú cưng đã mua</th>
+                <th>Tổng chi tiêu</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -23,14 +27,28 @@
                 <td>#{{ c.id }}</td>
                 <td><strong>{{ c.name }}</strong></td>
                 <td>{{ c.phone }}</td>
-                <td><span style="background: var(--secondary); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem;">{{ c.tier }}</span></td>
-                <td>{{ c.pets.count() }} <i class="fa-solid fa-paw"></i></td>
                 <td>
-                    {% if c.user_account %}
-                        <span style="color: #2e7d32; font-size: 0.85rem;"><i class="fa-solid fa-circle-check"></i> {{ c.user_account.username }}</span>
-                    {% else %}
-                        <span style="color: #999; font-size: 0.85rem;">Chưa có</span>
-                    {% endif %}
+                    <a href="{{ url_for('pets.list_pets', customer_id=c.id, source='customer_owned') }}" style="text-decoration: none; color: inherit;" title="Xem thú cưng khách mang đến">
+                        <span style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">
+                            {{ pet_counts[c.id].owned if pet_counts[c.id] else 0 }} <i class="fa-solid fa-paw"></i>
+                        </span>
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ url_for('pets.list_pets', customer_id=c.id, source='store_purchase') }}" style="text-decoration: none; color: inherit;" title="Xem thú cưng đã mua từ cửa hàng">
+                        <span style="background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 500;">
+                            {{ pet_counts[c.id].purchased if pet_counts[c.id] else 0 }} <i class="fa-solid fa-shopping-bag"></i>
+                        </span>
+                    </a>
+                </td>
+                <td>
+                    <div style="font-size: 0.9rem; font-weight: 500; color: #2e7d32;">{{ "{:,.0f}".format(c.total_spent or 0) }}đ</div>
+                </td>
+                <td>
+                    <a href="{{ url_for('pets.edit_customer', id=c.id) }}" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #eee;">Sửa</a>
+                    <form action="{{ url_for('pets.delete_customer', id=c.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này? Tất cả thú cưng của họ cũng sẽ bị ảnh hưởng.');">
+                        <button type="submit" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f;">Xóa</button>
+                    </form>
                 </td>
             </tr>
             {% else %}
@@ -41,4 +59,28 @@
         </tbody>
     </table>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('customerSearch');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+            
+            rows.forEach(row => {
+                // Bỏ qua dòng "Chưa có dữ liệu"
+                if (row.cells.length === 1) return;
+                
+                const text = row.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
 {% endblock %}
