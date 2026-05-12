@@ -8,5 +8,7 @@ services_bp = Blueprint('services', __name__)
 bookings_bp = Blueprint('bookings', __name__)
 pos_bp = Blueprint('pos', __name__)
 admin_bp = Blueprint('admin', __name__)
+reports_bp = Blueprint('reports', __name__)
+pet_sales_bp = Blueprint('pet_sales', __name__)
 
-from . import auth, dashboard, pets, inventory, services, bookings, pos, admin
+from . import auth, dashboard, pets, inventory, services, bookings, pos, admin, reports, pet_sales
