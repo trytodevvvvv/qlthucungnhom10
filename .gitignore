@@ -1,0 +1,34 @@
+# IDE settings
+.vscode/
+
+# Virtual environments
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# User requested exclusions
+uitest/
+reports/
+run.bat
+run.py
+seed.py
+config.py
+update_bookings.py
+update_db.py
+check_data.py
+migrate_pet_source.py
+
+# Markdown files
+*.md
+
+# Database file
+*.sqlite3
+*.db
