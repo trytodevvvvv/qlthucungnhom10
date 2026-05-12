@@ -75,31 +75,6 @@ def add_user():
         )
         user.set_password(password)
         
-        # Nếu là khách hàng, tự động tạo hồ sơ Customer
-        if role == 'customer':
-            address = request.form.get('address')
-            tier = request.form.get('tier', 'Standard')
-            
-            if not phone:
-                flash('Số điện thoại là bắt buộc cho tài khoản khách hàng!', 'danger')
-                return render_template('admin/user_form.html')
-            
-            # Kiểm tra SĐT đã tồn tại chưa
-            existing = Customer.query.filter_by(phone=phone).first()
-            if existing:
-                flash('Số điện thoại này đã được đăng ký cho khách hàng khác!', 'danger')
-                return render_template('admin/user_form.html')
-            
-            customer = Customer(
-                name=full_name or username,
-                phone=phone,
-                address=address,
-                tier=tier
-            )
-            db.session.add(customer)
-            db.session.flush()  # Lấy customer.id
-            user.customer_id = customer.id
-        
         db.session.add(user)
         db.session.commit()
         flash('Tạo tài khoản thành công!', 'success')
@@ -125,39 +100,6 @@ def edit_user(id):
         user.email = request.form.get('email') or None
         user.phone = request.form.get('phone')
         
-        # Cập nhật thông tin khách hàng nếu là customer
-        if user.role == 'customer':
-            phone = user.phone
-            address = request.form.get('address')
-            tier = request.form.get('tier', 'Standard')
-            
-            if not phone:
-                flash('Số điện thoại là bắt buộc cho tài khoản khách hàng!', 'danger')
-                return render_template('admin/user_form.html', user=user)
-            
-            if user.customer_profile:
-                # Cập nhật hồ sơ khách hàng đã có
-                user.customer_profile.name = user.full_name or user.username
-                user.customer_profile.phone = phone
-                user.customer_profile.address = address
-                user.customer_profile.tier = tier
-            else:
-                # Tạo hồ sơ khách hàng mới
-                existing = Customer.query.filter_by(phone=phone).first()
-                if existing:
-                    flash('Số điện thoại này đã được đăng ký cho khách hàng khác!', 'danger')
-                    return render_template('admin/user_form.html', user=user)
-                    
-                customer = Customer(
-                    name=user.full_name or user.username,
-                    phone=phone,
-                    address=address,
-                    tier=tier
-                )
-                db.session.add(customer)
-                db.session.flush()
-                user.customer_id = customer.id
-            
         password = request.form.get('password')
         if password:
             user.set_password(password)

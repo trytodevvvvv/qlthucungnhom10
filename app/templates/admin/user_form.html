@@ -54,43 +54,8 @@
                 <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Quản trị viên / Chủ cửa hàng</option>
                 <option value="receptionist" {% if user and user.role == 'receptionist' %}selected{% endif %}>Nhân viên thu ngân / Lễ tân</option>
                 <option value="staff" {% if user and user.role == 'staff' %}selected{% endif %}>Nhân viên chăm sóc / Thú y</option>
-                <option value="customer" {% if user and user.role == 'customer' %}selected{% endif %}>Khách hàng</option>
             </select>
             {% endif %}
-        </div>
-        
-        <!-- Thông tin khách hàng bổ sung - chỉ hiện khi chọn role = customer -->
-        {% if user and user.role == 'customer' %}
-        <div id="customer-info-section" style="display: block;">
-        {% else %}
-        <div id="customer-info-section" style="display: none;">
-        {% endif %}
-            <div style="border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; background: #fafafa; margin-bottom: 16px;">
-                <h4 style="margin: 0 0 16px 0; color: #333; font-size: 0.95rem;">
-                    <i class="fa-solid fa-address-card" style="color: var(--primary); margin-right: 6px;"></i>
-                    Thông tin hồ sơ khách hàng
-                </h4>
-                
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem;">Địa chỉ</label>
-                    <input type="text" name="address" class="form-control" 
-                           value="{{ user.customer_profile.address if user and user.customer_profile else '' }}" 
-                           placeholder="123 Đường ABC, Quận XYZ">
-                </div>
-                
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem;">Hạng thẻ</label>
-                    <select name="tier" class="form-control" style="padding: 10px;">
-                        {% set current_tier = user.customer_profile.tier if user and user.customer_profile else 'Standard' %}
-                        <option value="Standard" {% if current_tier == 'Standard' %}selected{% endif %}>Standard</option>
-                        <option value="Silver" {% if current_tier == 'Silver' %}selected{% endif %}>Silver (Bạc)</option>
-                        <option value="Gold" {% if current_tier == 'Gold' %}selected{% endif %}>Gold (Vàng)</option>
-                        <option value="Platinum" {% if current_tier == 'Platinum' %}selected{% endif %}>Platinum (Bạch kim)</option>
-                        <option value="Diamond" {% if current_tier == 'Diamond' %}selected{% endif %}>Diamond (Kim cương)</option>
-                        <option value="VIP" {% if current_tier == 'VIP' %}selected{% endif %}>VIP</option>
-                    </select>
-                </div>
-            </div>
         </div>
         
         {% if user %}
@@ -114,15 +79,4 @@
         </div>
     </form>
 </div>
-
-<script>
-document.getElementById('role-select').addEventListener('change', function() {
-    const section = document.getElementById('customer-info-section');
-    if (this.value === 'customer') {
-        section.style.display = 'block';
-    } else {
-        section.style.display = 'none';
-    }
-});
-</script>
 {% endblock %}
