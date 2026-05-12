@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PetHotel</class>
+ <widget class="QWidget" name="PetHotel">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>900</width><height>600</height></rect></property>
+  <layout class="QHBoxLayout">
+   <item>
+    <widget class="QGroupBox" name="groupCages">
+     <property name="title"><string>Sơ đồ Chuồng / Lồng Khách Sạn Pet</string></property>
+     <layout class="QGridLayout">
+      <item row="0" column="0"><widget class="QPushButton"><property name="text"><string>Lồng 01\n(Trống)</string></property><property name="minimumSize"><size><width>120</width><height>120</height></size></property></widget></item>
+      <item row="0" column="1"><widget class="QPushButton"><property name="text"><string>Lồng 02\n[Corgi - Milo]\n(Có pet)</string></property><property name="minimumSize"><size><width>120</width><height>120</height></size></property><property name="styleSheet"><string>background-color: #f1c40f;</string></property></widget></item>
+      <item row="0" column="2"><widget class="QPushButton"><property name="text"><string>Lồng 03\n(Cần dọn vệ sinh)</string></property><property name="minimumSize"><size><width>120</width><height>120</height></size></property><property name="styleSheet"><string>background-color: #e74c3c; color: white;</string></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupDetails">
+     <property name="title"><string>Nhật ký Lưu Chuồng</string></property>
+     <layout class="QVBoxLayout">
+      <item><widget class="QLabel"><property name="text"><string>Thú cưng: Milo (Corgi) - Lồng 02</string></property><property name="font"><font><bold>true</bold></font></property></widget></item>
+      <item><widget class="QLabel"><property name="text"><string>Giờ Check-in: 08:00 Ngày 13/04/2026</string></property></widget></item>
+      <item><widget class="QLabel"><property name="text"><string>Trạng thái sức khoẻ ban đầu: Khỏe mạnh</string></property></widget></item>
+      <item><widget class="QTextEdit"><property name="placeholderText"><string>Ghi chú nhật ký chăm sóc (Ăn mấy bữa, đi vệ sinh...)</string></property></widget></item>
+      <item><widget class="QPushButton"><property name="text"><string>Check-out &amp; Tính Phí</string></property><property name="styleSheet"><string>background-color: #2ecc71; color: white; padding: 10px; font-weight: bold;</string></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

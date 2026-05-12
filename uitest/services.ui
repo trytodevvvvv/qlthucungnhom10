@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Services</class>
+ <widget class="QWidget" name="Services">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>800</width><height>600</height></rect></property>
+  <layout class="QVBoxLayout">
+   <item>
+    <layout class="QHBoxLayout">
+     <item><widget class="QPushButton" name="btnNewSvc"><property name="text"><string>+ Tạo Dịch Vụ Mới</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnNewCombo"><property name="text"><string>+ Tạo Gói Thẻ / Combo</string></property></widget></item>
+     <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableServices">
+     <column><property name="text"><string>Tên Dịch Vụ</string></property></column>
+     <column><property name="text"><string>Loại (Chó/Mèo)</string></property></column>
+     <column><property name="text"><string>Khoảng Cân Nặng (kg)</string></property></column>
+     <column><property name="text"><string>Giá Phí (VNĐ)</string></property></column>
+     <column><property name="text"><string>% Hoa hồng (Groomer)</string></property></column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

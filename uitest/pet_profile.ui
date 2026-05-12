@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PetProfile</class>
+ <widget class="QWidget" name="PetProfile">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Hồ sơ lưu trữ Thú Cưng</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBasicInfo">
+     <property name="title"><string>Thông tin chung</string></property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="lblAvatar">
+        <property name="minimumSize"><size><width>120</width><height>120</height></size></property>
+        <property name="maximumSize"><size><width>120</width><height>120</height></size></property>
+        <property name="styleSheet"><string>background-color: #cccccc; border-radius: 60px;</string></property>
+        <property name="text"><string>Avatar Tròn</string></property>
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0"><widget class="QLabel" name="lblNameLabel"><property name="text"><string>Tên Thú Cưng:</string></property></widget></item>
+        <item row="0" column="1"><widget class="QLineEdit" name="txtName"><property name="text"><string>Milo</string></property></widget></item>
+        <item row="1" column="0"><widget class="QLabel" name="lblBreedLabel"><property name="text"><string>Giống/Loài:</string></property></widget></item>
+        <item row="1" column="1"><widget class="QLineEdit" name="txtBreed"><property name="text"><string>Poodle / Chó</string></property></widget></item>
+        <item row="2" column="0"><widget class="QLabel" name="lblWeightLabel"><property name="text"><string>Cân nặng (kg):</string></property></widget></item>
+        <item row="2" column="1"><widget class="QLineEdit" name="txtWeight"><property name="text"><string>4.5</string></property></widget></item>
+        <item row="3" column="0"><widget class="QLabel" name="lblOwnerLabel"><property name="text"><string>Tên Chủ Nuôi:</string></property></widget></item>
+        <item row="3" column="1"><widget class="QLineEdit" name="txtOwner"/></item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex"><number>0</number></property>
+     <widget class="QWidget" name="tabTimeline">
+      <attribute name="title"><string>Timeline Giao dịch &amp; Y tế</string></attribute>
+      <layout class="QVBoxLayout">
+       <item><widget class="QListWidget" name="listTimeline"/></item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabPhotos">
+      <attribute name="title"><string>Album Ảnh (Before/After)</string></attribute>
+      <layout class="QVBoxLayout">
+       <item>
+        <widget class="QScrollArea" name="scrollPhotos">
+         <property name="widgetResizable"><bool>true</bool></property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <layout class="QGridLayout" name="gridLayoutPhotos"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabNotes">
+      <attribute name="title"><string>Ghi chú đặc biệt</string></attribute>
+      <layout class="QVBoxLayout">
+       <item><widget class="QTextEdit" name="txtNotes"/></item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

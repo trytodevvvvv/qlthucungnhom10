@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CalendarBoard</class>
+ <widget class="QWidget" name="CalendarBoard">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>768</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Lịch Hẹn (Gantt/Tiến độ)</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="controlsLayout">
+     <item><widget class="QDateEdit" name="dateEdit"><property name="calendarPopup"><bool>true</bool></property></widget></item>
+     <item><widget class="QComboBox" name="cbViewType">
+       <item><property name="text"><string>Theo Ngày</string></property></item>
+       <item><property name="text"><string>Theo Tuần</string></property></item>
+     </widget></item>
+     <item><widget class="QPushButton" name="btnAddAppointment"><property name="text"><string>+ Thêm lịch hẹn</string></property></widget></item>
+     <item><spacer name="horizontalSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableCalendar">
+     <property name="toolTip"><string>Gantt Chart hiển thị lịch hẹn</string></property>
+     <property name="alternatingRowColors"><bool>true</bool></property>
+     <column><property name="text"><string>Nhân viên / Phòng</string></property></column>
+     <column><property name="text"><string>08:00</string></property></column>
+     <column><property name="text"><string>09:00</string></property></column>
+     <column><property name="text"><string>10:00</string></property></column>
+     <column><property name="text"><string>11:00</string></property></column>
+     <column><property name="text"><string>12:00</string></property></column>
+     <column><property name="text"><string>13:00</string></property></column>
+     <column><property name="text"><string>14:00</string></property></column>
+     <column><property name="text"><string>15:00</string></property></column>
+     <column><property name="text"><string>16:00</string></property></column>
+     <column><property name="text"><string>17:00</string></property></column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

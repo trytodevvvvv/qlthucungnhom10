@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Inventory</class>
+ <widget class="QWidget" name="Inventory">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>800</width><height>600</height></rect></property>
+  <layout class="QVBoxLayout">
+   <item>
+    <layout class="QHBoxLayout">
+     <item><widget class="QLineEdit" name="txtSearch"><property name="placeholderText"><string>Tìm kiếm hàng hóa (nhập mã vạch)...</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnAdd"><property name="text"><string>+ Thêm SP Mới</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnImport"><property name="text"><string>Nhập Kho</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableInventory">
+     <column><property name="text"><string>Mã SP</string></property></column>
+     <column><property name="text"><string>Tên hàng hóa</string></property></column>
+     <column><property name="text"><string>Danh mục</string></property></column>
+     <column><property name="text"><string>Khối lượng / Thể tích</string></property></column>
+     <column><property name="text"><string>Tồn kho</string></property></column>
+     <column><property name="text"><string>Giá nhập</string></property></column>
+     <column><property name="text"><string>Giá bán</string></property></column>
+     <column><property name="text"><string>Trạng thái</string></property></column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

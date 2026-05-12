@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>POSWindow</class>
+ <widget class="QWidget" name="POSWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1200</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Bán hàng (POS)</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QWidget" name="leftPanel" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>2</horstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="searchLayout">
+        <item><widget class="QLineEdit" name="txtSearch"><property name="placeholderText"><string>Quét mã vạch hoặc nhập tên sản phẩm, dịch vụ...</string></property></widget></item>
+        <item><widget class="QPushButton" name="btnSearch"><property name="text"><string>Tìm kiếm</string></property></widget></item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QScrollArea" name="scrollProducts">
+        <property name="widgetResizable"><bool>true</bool></property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <layout class="QGridLayout" name="gridLayout_Products"/>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="rightPanel" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>1</horstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item><widget class="QLabel" name="lblCart"><property name="text"><string>Giỏ hàng chờ thanh toán</string></property><property name="font"><font><pointsize>12</pointsize><weight>75</weight><bold>true</bold></font></property></widget></item>
+      <item>
+       <widget class="QTableWidget" name="tableCart">
+        <column><property name="text"><string>Tên</string></property></column>
+        <column><property name="text"><string>SL</string></property></column>
+        <column><property name="text"><string>Giá</string></property></column>
+       </widget>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="formLayoutTotal">
+        <item row="0" column="0"><widget class="QLabel" name="lblTotalText"><property name="text"><string>Tổng cộng:</string></property></widget></item>
+        <item row="0" column="1"><widget class="QLabel" name="lblTotalValue"><property name="text"><string>0 đ</string></property></widget></item>
+        <item row="1" column="0"><widget class="QLabel" name="lblDiscountText"><property name="text"><string>Giảm giá:</string></property></widget></item>
+        <item row="1" column="1"><widget class="QLineEdit" name="txtDiscount"/></item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnCheckout">
+        <property name="text"><string>THANH TOÁN</string></property>
+        <property name="styleSheet"><string>background-color: #e74c3c; color: white; font-weight: bold; font-size: 18px; padding: 15px;</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

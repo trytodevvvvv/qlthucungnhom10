@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dashboard</class>
+ <widget class="QWidget" name="Dashboard">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>768</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dashboard - Tổng quan</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="kpiLayout">
+     <item>
+      <widget class="QFrame" name="frameRevenue">
+       <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+       <layout class="QVBoxLayout">
+        <item><widget class="QLabel" name="lblRevTitle"><property name="text"><string>Doanh thu hôm nay</string></property></widget></item>
+        <item><widget class="QLabel" name="lblRevValue"><property name="text"><string>15,500,000 đ</string></property><property name="font"><font><pointsize>16</pointsize><weight>75</weight><bold>true</bold></font></property></widget></item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameWaiting">
+       <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+       <layout class="QVBoxLayout">
+        <item><widget class="QLabel" name="lblWaitTitle"><property name="text"><string>Số lịch chờ phục vụ</string></property></widget></item>
+        <item><widget class="QLabel" name="lblWaitValue"><property name="text"><string>8 Khách</string></property><property name="font"><font><pointsize>16</pointsize><weight>75</weight><bold>true</bold></font></property></widget></item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="listsLayout">
+     <item>
+      <widget class="QGroupBox" name="groupLowStock">
+       <property name="title"><string>Tồn kho gần hết</string></property>
+       <layout class="QVBoxLayout">
+        <item><widget class="QTableWidget" name="tableLowStock">
+         <column><property name="text"><string>Mã SP</string></property></column>
+         <column><property name="text"><string>Tên sản phẩm</string></property></column>
+         <column><property name="text"><string>SL Còn</string></property></column>
+        </widget></item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupVaccine">
+       <property name="title"><string>Thú cưng sắp tới hạn tiêm ngừa / sổ giun</string></property>
+       <layout class="QVBoxLayout">
+        <item><widget class="QListWidget" name="listVaccine"/></item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

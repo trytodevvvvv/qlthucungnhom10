@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CRM</class>
+ <widget class="QWidget" name="CRM">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>800</width><height>600</height></rect></property>
+  <layout class="QVBoxLayout">
+   <item>
+    <layout class="QHBoxLayout">
+     <item><widget class="QPushButton"><property name="text"><string>Nhắc lịch tiêm phòng qua Zalo OA</string></property><property name="styleSheet"><string>background-color: #2980b9; color: white;</string></property></widget></item>
+     <item><widget class="QPushButton"><property name="text"><string>Gửi SMS Promo Khách Vip</string></property></widget></item>
+     <item><widget class="QPushButton"><property name="text"><string>Gửi chúc mừng Sinh nhật bé Pet</string></property></widget></item>
+     <item><spacer><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableCRM">
+     <column><property name="text"><string>Tên Khách hàng</string></property></column>
+     <column><property name="text"><string>Tên Thú cưng</string></property></column>
+     <column><property name="text"><string>Số điện thoại</string></property></column>
+     <column><property name="text"><string>Nội dung cảnh báo / Nhắc nhở</string></property></column>
+     <column><property name="text"><string>Trạng thái gửi (SMS/Zalo)</string></property></column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
