@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Bán Thú Cưng</h2>
+    {% if current_user.role in ['admin', 'receptionist'] %}
+    <a href="{{ url_for('pet_sales.add_pet') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm Thú Cưng Bán</a>
+    {% endif %}
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+    {% for pet in pets %}
+    <div class="card" style="padding: 16px; border-radius: 12px; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="height: 180px; background: #f0f0f0; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            {% if pet.image %}
+            <img src="{{ url_for('static', filename='uploads/' + pet.image) }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+            <i class="fa-solid fa-paw" style="font-size: 4rem; color: #ccc;"></i>
+            {% endif %}
+        </div>
+        <h3 style="margin-bottom: 8px; font-size: 1.2rem;">{{ pet.name }}</h3>
+        <p style="color: #666; margin-bottom: 4px; font-size: 0.9rem;"><strong>Loài:</strong> {{ pet.species }} - {{ pet.breed }}</p>
+        <p style="color: #666; margin-bottom: 12px; font-size: 0.9rem;">
+            <strong>Tuổi:</strong> {{ pet.age or 'Chưa rõ' }} <br>
+            <span style="color: var(--primary); font-weight: 500;">Còn lại: {{ pet.quantity }} con</span>
+        </p>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+            <span style="font-weight: bold; color: var(--primary-dark); font-size: 1.2rem;">{{ "{:,.0f}".format(pet.price) }}đ</span>
+            <a href="{{ url_for('pet_sales.checkout', pet_id=pet.id) }}" class="btn btn-primary" style="padding: 6px 12px; border-radius: 20px;">
+                <i class="fa-solid fa-cart-arrow-down"></i> Bán
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+        <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 16px;"></i>
+        <p>Hiện tại không có thú cưng nào đang được bán.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

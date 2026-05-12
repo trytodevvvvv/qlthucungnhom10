@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Bán thú cưng &amp; Sản phẩm kèm theo</h2>
+    <a href="{{ url_for('pet_sales.index') }}" class="btn" style="background: #eee;">Hủy</a>
+</div>
+
+<form method="POST" action="" id="checkout-form">
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    
+    <!-- Left Column: Pet & Products -->
+    <div>
+        <!-- Thú cưng được bán -->
+        <div class="card" style="margin-bottom: 24px; display: flex; gap: 20px; align-items: center; background: #fdfbf7; border-left: 4px solid var(--primary);">
+            <div style="width: 80px; height: 80px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-paw" style="font-size: 2.5rem; color: var(--primary);"></i>
+            </div>
+            <div style="flex: 1;">
+                <h3 style="margin-bottom: 4px; color: #333;">{{ pet.name }}</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 0;">Loài: {{ pet.species }} - {{ pet.breed }} | Tuổi: {{ pet.age or 'Chưa rõ' }}</p>
+                <p style="color: #888; font-size: 0.85rem; margin: 4px 0 0;">Còn lại trong kho: <strong>{{ pet.quantity }}</strong> con</p>
+            </div>
+            <div style="text-align: right; flex-shrink: 0;">
+                <div style="font-size: 0.85rem; color: #666;">Đơn giá / con</div>
+                <div style="font-size: 1.3rem; font-weight: bold; color: var(--primary-dark);" id="pet-unit-price" data-price="{{ pet.price }}">{{ "{:,.0f}".format(pet.price) }}đ</div>
+            </div>
+        </div>
+
+        <!-- Chọn số lượng mua -->
+        <div class="card" style="margin-bottom: 24px; padding: 16px 20px;">
+            <h3 style="margin-bottom: 14px; font-size: 1rem; color: #444;">
+                <i class="fa-solid fa-hashtag" style="color: var(--primary);"></i> Số lượng mua
+            </h3>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" onclick="changeQty(-1)" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--primary); background: white; color: var(--primary); font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">−</button>
+                    <input type="number" name="pet_quantity" id="pet_quantity" value="1" min="1" max="{{ pet.quantity }}"
+                        style="width: 64px; text-align: center; font-size: 1.2rem; font-weight: bold; border: 2px solid #e0e0e0; border-radius: 8px; padding: 6px; outline: none;"
+                        onchange="onQtyChange()">
+                    <button type="button" onclick="changeQty(1)" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--primary); background: var(--primary); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">+</button>
+                </div>
+                <div style="color: #888; font-size: 0.9rem;">
+                    con &nbsp;×&nbsp; <span id="unit-price-label">{{ "{:,.0f}".format(pet.price) }}</span>đ
+                    = <strong id="pet-subtotal-label" style="color: var(--primary-dark); font-size: 1rem;">{{ "{:,.0f}".format(pet.price) }}đ</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sản phẩm mua kèm -->
+        <div class="card">
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
+                <span>Mua kèm phụ kiện / Thức ăn</span>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('product-selector').style.display='block'" style="padding: 4px 10px; font-size: 0.85rem;">+ Thêm sản phẩm</button>
+            </h3>
+            
+            <div id="product-selector" style="display: none; margin-bottom: 20px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
+                <select id="prod-select" class="form-control" style="margin-bottom: 10px;">
+                    <option value="">-- Chọn sản phẩm --</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-price="{{ p.price }}" data-name="{{ p.name }}" data-stock="{{ p.stock_quantity }}">
+                        {{ p.name }} ({{ "{:,.0f}".format(p.price) }}đ) - Kho: {{ p.stock_quantity }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="btn btn-primary" onclick="addProductToCart()">Thêm vào danh sách</button>
+                <button type="button" class="btn" style="background: #ddd;" onclick="document.getElementById('product-selector').style.display='none'">Đóng</button>
+            </div>
+
+            <table class="table" id="cart-table">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th style="width: 100px;">Đơn giá</th>
+                        <th style="width: 80px;">SL</th>
+                        <th style="width: 120px;">Thành tiền</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items">
+                    <tr id="empty-cart-msg">
+                        <td colspan="5" style="text-align: center; color: #999; font-style: italic;">Chưa có sản phẩm kèm theo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right Column: Checkout details -->
+    <div>
+        <div class="card" style="position: sticky; top: 20px;">
+            <h3 style="margin-bottom: 16px; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 12px;">Thông tin thanh toán</h3>
+            
+            <!-- Khách hàng — 2 tab: Có sẵn / Khách mới -->
+            <input type="hidden" name="customer_mode" id="customer_mode" value="existing">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Khách hàng <span style="color: red;">*</span></label>
+
+                <!-- Tab switcher -->
+                <div style="display: flex; border: 1.5px solid #e0e0e0; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
+                    <button type="button" id="tab-existing" onclick="switchTab('existing')"
+                        style="flex:1; padding:8px 10px; font-size:0.82rem; font-weight:600; border:none; cursor:pointer;
+                               background:var(--primary); color:#fff; transition:all .2s;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Khách có sẵn
+                    </button>
+                    <button type="button" id="tab-new" onclick="switchTab('new')"
+                        style="flex:1; padding:8px 10px; font-size:0.82rem; font-weight:600; border:none; cursor:pointer;
+                               background:#f0f0f0; color:#555; transition:all .2s;">
+                        <i class="fa-solid fa-user-plus"></i> Khách mới
+                    </button>
+                </div>
+
+                <!-- Panel: Khách có sẵn -->
+                <div id="panel-existing">
+                    <div style="position: relative;">
+                        <input type="text" name="customer_identifier" id="customer_identifier"
+                            list="customers_list" class="form-control"
+                            placeholder="Nhập tên hoặc SĐT để tìm kiếm..."
+                            autocomplete="off" style="padding-right: 36px;">
+                        <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none;">▼</span>
+                    </div>
+                    <datalist id="customers_list">
+                        {% for c in customers %}
+                        <option value="{{ c.phone }} - {{ c.name }}"></option>
+                        {% endfor %}
+                    </datalist>
+                    <small style="color:var(--text-muted);display:block;margin-top:4px;">Gõ tên để hệ thống tự gợi ý danh sách.</small>
+                </div>
+
+                <!-- Panel: Khách mới -->
+                <div id="panel-new" style="display:none;">
+                    <div style="background:#fff8f0; border:1.5px dashed #f0a500; border-radius:8px; padding:14px 14px 10px;">
+                        <div style="margin-bottom:10px;">
+                            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:5px;">
+                                Tên khách hàng <span style="color:red;">*</span>
+                            </label>
+                            <input type="text" id="new_cust_name" name="new_cust_name" class="form-control"
+                                placeholder="Ví dụ: Nguyễn Văn A">
+                        </div>
+                        <div>
+                            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:5px;">
+                                Số điện thoại
+                            </label>
+                            <input type="text" id="new_cust_phone" name="new_cust_phone" class="form-control"
+                                placeholder="Ví dụ: 0901234567">
+                        </div>
+                        <p style="margin:10px 0 0;font-size:0.78rem;color:#b07d00;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Khách hàng mới sẽ được tạo tự động và lưu vào hệ thống.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phương thức thanh toán -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Phương thức TT</label>
+                <select name="payment_method" id="payment_method" class="form-control" onchange="onPaymentMethodChange()">
+                    <option value="Cash">Tiền mặt</option>
+                    <option value="Banking">Chuyển khoản / QR Code</option>
+                    <option value="Card">Quẹt thẻ (POS)</option>
+                </select>
+            </div>
+
+            <!-- QR Preview nhỏ khi chọn Banking -->
+            <div id="qr-preview-mini" style="display:none; text-align:center; margin-bottom: 16px; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
+                <p style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">Xem trước mã QR</p>
+                <img id="qr-img-mini" src="" alt="QR" style="max-width: 110px; border-radius: 6px;">
+            </div>
+
+            <!-- Tóm tắt tiền -->
+            <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #666;">
+                    <span>Tiền thú cưng (<span id="qty-label">1</span> con):</span>
+                    <span id="summary-pet-price">{{ "{:,.0f}".format(pet.price) }}đ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: #666;">
+                    <span>Tiền sản phẩm:</span>
+                    <span id="summary-prod-price">0đ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px dashed #ccc; padding-top: 12px; font-size: 1.2rem; font-weight: bold;">
+                    <span>Tổng cộng:</span>
+                    <span id="summary-total" style="color: var(--primary-dark);">{{ "{:,.0f}".format(pet.price) }}đ</span>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem; font-weight: bold;" onclick="openPaymentModal()">
+                <i class="fa-solid fa-circle-check"></i> Thanh toán ngay
+            </button>
+        </div>
+    </div>
+</div>
+</form>
+
+<!-- ====== Modal Xác nhận Thanh toán ====== -->
+<div id="payment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 10000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 92%; max-width: 460px; padding: 28px; text-align: center; animation: slideDown 0.3s ease-out;">
+        <h3 id="modal-title" style="margin-bottom: 6px; font-size: 1.2rem;">Xác nhận thanh toán</h3>
+        <p id="modal-subtitle" style="color: #888; font-size: 0.9rem; margin-bottom: 20px;"></p>
+        <div id="modal-body" style="margin-bottom: 24px;"></div>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn" style="flex: 1; padding: 13px; background: #eee; font-weight: 600;" onclick="closePaymentModal()">
+                <i class="fa-solid fa-xmark"></i> Hủy
+            </button>
+            <button id="btn-confirm-payment" class="btn btn-primary" style="flex: 1; padding: 13px; font-weight: 600;">
+                <i class="fa-solid fa-check"></i> Xác nhận
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes slideDown {
+    from { transform: translateY(-24px); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+#pet_quantity:focus { border-color: var(--primary); }
+</style>
+
+<div id="pet-data" data-max-qty="{{ pet.quantity }}" style="display: none;"></div>
+
+<script>
+    const petUnitPrice = parseFloat(document.getElementById('pet-unit-price').getAttribute('data-price'));
+    const maxQty = parseInt(document.getElementById('pet-data').dataset.maxQty);
+    let cartProductTotal = 0;
+
+    /* ===== Tab Khách có sẵn / Khách mới ===== */
+    function switchTab(mode) {
+        document.getElementById('customer_mode').value = mode;
+        const isExisting = mode === 'existing';
+
+        // Panel visibility
+        document.getElementById('panel-existing').style.display = isExisting ? 'block' : 'none';
+        document.getElementById('panel-new').style.display      = isExisting ? 'none'  : 'block';
+
+        // Tab button styles
+        const tabE = document.getElementById('tab-existing');
+        const tabN = document.getElementById('tab-new');
+        if (isExisting) {
+            tabE.style.background = 'var(--primary)'; tabE.style.color = '#fff';
+            tabN.style.background = '#f0f0f0';        tabN.style.color = '#555';
+        } else {
+            tabE.style.background = '#f0f0f0'; tabE.style.color = '#555';
+            tabN.style.background = 'var(--primary)'; tabN.style.color = '#fff';
+        }
+
+        // Focus đúng ô
+        setTimeout(() => {
+            if (isExisting) document.getElementById('customer_identifier').focus();
+            else            document.getElementById('new_cust_name').focus();
+        }, 50);
+    }
+
+    /* ===== Chọn số lượng thú cưng ===== */
+    function changeQty(delta) {
+        const input = document.getElementById('pet_quantity');
+        let val = parseInt(input.value) + delta;
+        if (val < 1) val = 1;
+        if (val > maxQty) val = maxQty;
+        input.value = val;
+        onQtyChange();
+    }
+
+    function onQtyChange() {
+        const input = document.getElementById('pet_quantity');
+        let val = parseInt(input.value) || 1;
+        if (val < 1) val = 1;
+        if (val > maxQty) val = maxQty;
+        input.value = val;
+
+        const petSubtotal = val * petUnitPrice;
+        document.getElementById('pet-subtotal-label').innerText = formatMoney(petSubtotal);
+        document.getElementById('qty-label').innerText = val;
+        document.getElementById('summary-pet-price').innerText = formatMoney(petSubtotal);
+        document.getElementById('summary-total').innerText = formatMoney(petSubtotal + cartProductTotal);
+        onPaymentMethodChange();
+    }
+
+    /* ===== Phương thức thanh toán / QR ===== */
+    function buildQrUrl(amount) {
+        const bankId = 'MB';
+        const accountNo = '0338484668';
+        const template = 'compact2';
+        const desc = encodeURIComponent('Thanh toan ban thu cung PetShop');
+        const name = encodeURIComponent('DANG BAO HUNG');
+        return `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${Math.round(amount)}&addInfo=${desc}&accountName=${name}`;
+    }
+
+    function getTotal() {
+        const qty = parseInt(document.getElementById('pet_quantity').value) || 1;
+        return qty * petUnitPrice + cartProductTotal;
+    }
+
+    function onPaymentMethodChange() {
+        const method = document.getElementById('payment_method').value;
+        const total  = getTotal();
+        const qrMini = document.getElementById('qr-preview-mini');
+        const qrImg  = document.getElementById('qr-img-mini');
+        if (method === 'Banking' && total > 0) {
+            qrImg.src = buildQrUrl(total);
+            qrMini.style.display = 'block';
+        } else {
+            qrMini.style.display = 'none';
+        }
+    }
+
+    /* ===== Định dạng tiền ===== */
+    function formatMoney(num) {
+        return num.toLocaleString('vi-VN') + 'đ';
+    }
+
+    /* ===== Giỏ sản phẩm ===== */
+    function addProductToCart() {
+        const select = document.getElementById('prod-select');
+        if (!select.value) return;
+        const option  = select.options[select.selectedIndex];
+        const id      = option.value;
+        const name    = option.getAttribute('data-name');
+        const price   = parseFloat(option.getAttribute('data-price'));
+        const stock   = parseInt(option.getAttribute('data-stock'));
+
+        if (document.getElementById(`cart-row-${id}`)) {
+            alert('Sản phẩm đã có trong danh sách!');
+            return;
+        }
+        document.getElementById('empty-cart-msg').style.display = 'none';
+        const tbody = document.getElementById('cart-items');
+        const tr = document.createElement('tr');
+        tr.id = `cart-row-${id}`;
+        tr.innerHTML = `
+            <td>${name}<input type="hidden" name="product_id[]" value="${id}"></td>
+            <td>${formatMoney(price)}</td>
+            <td><input type="number" name="quantity[]" value="1" min="1" max="${stock}" class="form-control" style="width:60px;padding:4px;" onchange="updateRowTotal(this, ${price}, '${id}')"></td>
+            <td id="row-total-${id}" style="font-weight:500;">${formatMoney(price)}</td>
+            <td><button type="button" class="btn" style="padding:2px 6px;color:#d32f2f;" onclick="removeRow('${id}')"><i class="fa-solid fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+        recalcProductTotal();
+    }
+
+    function updateRowTotal(input, price, id) {
+        const qty = parseInt(input.value) || 0;
+        document.getElementById(`row-total-${id}`).innerText = formatMoney(qty * price);
+        recalcProductTotal();
+    }
+
+    function removeRow(id) {
+        const row = document.getElementById(`cart-row-${id}`);
+        if (row) {
+            row.remove();
+            recalcProductTotal();
+            const tbody = document.getElementById('cart-items');
+            if ([...tbody.children].every(c => c.id === 'empty-cart-msg')) {
+                document.getElementById('empty-cart-msg').style.display = '';
+            }
+        }
+    }
+
+    function recalcProductTotal() {
+        cartProductTotal = 0;
+        const quantities  = document.getElementsByName('quantity[]');
+        const productIds  = document.getElementsByName('product_id[]');
+        const options = Array.from(document.getElementById('prod-select').options);
+        for (let i = 0; i < quantities.length; i++) {
+            const qty = parseInt(quantities[i].value) || 0;
+            const opt = options.find(o => o.value === productIds[i].value);
+            if (opt) cartProductTotal += qty * parseFloat(opt.getAttribute('data-price'));
+        }
+        document.getElementById('summary-prod-price').innerText = formatMoney(cartProductTotal);
+        // Cập nhật tổng
+        const petQty = parseInt(document.getElementById('pet_quantity').value) || 1;
+        document.getElementById('summary-total').innerText = formatMoney(petQty * petUnitPrice + cartProductTotal);
+        onPaymentMethodChange();
+    }
+
+    /* ===== Modal Thanh toán ===== */
+    function openPaymentModal() {
+        // Validate theo tab đang active
+        const mode = document.getElementById('customer_mode').value;
+        if (mode === 'existing') {
+            if (!document.getElementById('customer_identifier').value.trim()) {
+                alert('Vui lòng chọn hoặc nhập tên khách hàng!');
+                document.getElementById('customer_identifier').focus();
+                return;
+            }
+        } else {
+            const newName = document.getElementById('new_cust_name').value.trim();
+            if (!newName) {
+                alert('Vui lòng nhập tên khách hàng mới!');
+                document.getElementById('new_cust_name').focus();
+                return;
+            }
+        }
+        const method = document.getElementById('payment_method').value;
+        const total  = getTotal();
+        const modal  = document.getElementById('payment-modal');
+        modal.style.display = 'flex';
+
+        const amountHTML = `<div style="font-size:2rem;font-weight:bold;color:var(--primary-dark);margin-bottom:4px;">${total.toLocaleString('vi-VN')}đ</div>`;
+
+        if (method === 'Banking') {
+            document.getElementById('modal-title').innerText    = '💳 Thanh toán chuyển khoản';
+            document.getElementById('modal-subtitle').innerText = 'Quét mã QR hoặc chuyển khoản theo thông tin dưới đây';
+            document.getElementById('modal-body').innerHTML = `
+                ${amountHTML}
+                <div style="background:#f9f9f9;padding:16px;border-radius:10px;border:1px dashed #ccc;margin-top:12px;">
+                    <img src="${buildQrUrl(total)}" alt="QR Code" style="max-width:200px;border-radius:8px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+                    <div style="font-weight:700;font-size:1rem;">DANG BAO HUNG</div>
+                    <div style="font-size:0.9rem;color:#555;margin-top:4px;">STK: 0338484668 &nbsp;|&nbsp; MB Bank</div>
+                    <p style="margin-top:12px;font-size:.82rem;color:#d32f2f;font-weight:500;background:#fff3f3;padding:8px;border-radius:6px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Vui lòng xác nhận sau khi khách đã chuyển khoản thành công
+                    </p>
+                </div>`;
+            document.getElementById('btn-confirm-payment').innerHTML = '<i class="fa-solid fa-check-double"></i> Xác nhận đã nhận tiền';
+        } else if (method === 'Cash') {
+            document.getElementById('modal-title').innerText    = '💵 Thanh toán tiền mặt';
+            document.getElementById('modal-subtitle').innerText = 'Xác nhận thu tiền mặt từ khách hàng';
+            document.getElementById('modal-body').innerHTML = `
+                ${amountHTML}
+                <div style="padding:20px;background:#fffde7;border-radius:10px;border:1px solid #fff59d;margin-top:12px;">
+                    <i class="fa-solid fa-money-bill-wave" style="font-size:3rem;color:#fbc02d;margin-bottom:12px;"></i>
+                    <p style="font-weight:500;margin:0;">Bạn đã nhận đủ <strong>${total.toLocaleString('vi-VN')}đ</strong> tiền mặt từ khách hàng chưa?</p>
+                </div>`;
+            document.getElementById('btn-confirm-payment').innerHTML = '<i class="fa-solid fa-check"></i> Xác nhận đã nhận tiền mặt';
+        } else {
+            document.getElementById('modal-title').innerText    = '💳 Thanh toán quẹt thẻ (POS)';
+            document.getElementById('modal-subtitle').innerText = 'Xác nhận giao dịch thẻ thành công';
+            document.getElementById('modal-body').innerHTML = `
+                ${amountHTML}
+                <div style="padding:20px;background:#e3f2fd;border-radius:10px;border:1px solid #bbdefb;margin-top:12px;">
+                    <i class="fa-solid fa-credit-card" style="font-size:3rem;color:#1976d2;margin-bottom:12px;"></i>
+                    <p style="font-weight:500;margin:0;">Vui lòng xác nhận sau khi quẹt thẻ thành công trên thiết bị POS.</p>
+                </div>`;
+            document.getElementById('btn-confirm-payment').innerHTML = '<i class="fa-solid fa-check"></i> Xác nhận đã quẹt thẻ';
+        }
+
+        document.getElementById('btn-confirm-payment').onclick = function() {
+            modal.style.display = 'none';
+            document.getElementById('checkout-form').submit();
+        };
+    }
+
+    function closePaymentModal() {
+        document.getElementById('payment-modal').style.display = 'none';
+    }
+</script>
+{% endblock %}

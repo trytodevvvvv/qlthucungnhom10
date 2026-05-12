@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2>Thêm Thú Cưng Bán</h2>
+    <a href="{{ url_for('pet_sales.index') }}" class="btn" style="background: #eee;">Quay lại</a>
+</div>
+
+<div class="card" style="max-width: 600px;">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tên thú cưng <span style="color: red;">*</span></label>
+            <input type="text" name="name" class="form-control" required placeholder="Ví dụ: Cún Poodle mini" value="{{ pet.name if pet else '' }}">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Loài</label>
+                <select name="species" class="form-control">
+                    <option value="">-- Chọn loài --</option>
+                    <option value="Chó" {% if pet and pet.species == 'Chó' %}selected{% endif %}>Chó</option>
+                    <option value="Mèo" {% if pet and pet.species == 'Mèo' %}selected{% endif %}>Mèo</option>
+                    <option value="Chuột Hamster" {% if pet and pet.species == 'Chuột Hamster' %}selected{% endif %}>Chuột Hamster</option>
+                    <option value="Thỏ" {% if pet and pet.species == 'Thỏ' %}selected{% endif %}>Thỏ</option>
+                    <option value="Chim" {% if pet and pet.species == 'Chim' %}selected{% endif %}>Chim</option>
+                    <option value="Khác" {% if pet and pet.species and pet.species not in ['Chó', 'Mèo', 'Chuột Hamster', 'Thỏ', 'Chim'] %}selected{% endif %}>Khác</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giống</label>
+                <input type="text" name="breed" class="form-control" placeholder="Ví dụ: Poodle" value="{{ pet.breed if pet else '' }}">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tuổi</label>
+                <input type="text" name="age" class="form-control" placeholder="Ví dụ: 2 tháng" value="{{ pet.age if pet else '' }}">
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Giá bán (VNĐ) <span style="color: red;">*</span></label>
+                <input type="number" name="price" class="form-control" required min="0" placeholder="0" value="{{ pet.price if pet else '' }}">
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Số lượng con <span style="color: red;">*</span></label>
+                <input type="number" name="quantity" class="form-control" required min="1" value="{{ pet.quantity if pet else '1' }}">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Ghi chú sức khỏe / Tình trạng</label>
+            <textarea name="health_notes" class="form-control" rows="3" placeholder="Đã tiêm phòng 1 mũi...">{{ pet.health_notes if pet else '' }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: bold;">Lưu thú cưng</button>
+    </form>
+</div>
+{% endblock %}
