@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 import json
 from . import pos_bp
-from app.models import Product, PetService, Customer, Order, OrderItem, Voucher
+from app.models import Product, PetService, Customer, Order, OrderItem
 from app.extensions import db
 
 from datetime import datetime
@@ -15,7 +15,42 @@ def index():
         return redirect(url_for('dashboard.index'))
     products = Product.query.filter(Product.stock_quantity > 0).all()
     services = PetService.query.filter_by(is_active=True).all()
+    from app.models import PetForSale
+    pets_for_sale = PetForSale.query.filter(PetForSale.status == 'Available', PetForSale.quantity > 0).all()
     customers = Customer.query.all()
+    booking_id = request.args.get('booking_id')
+    prefill_cart = []
+    prefill_customer_identifier = ""
+    if booking_id:
+        from app.models import Booking
+        booking = Booking.query.get(booking_id)
+        if booking and not booking.is_paid:
+            if booking.customer:
+                prefill_customer_identifier = f"{booking.customer.phone} - {booking.customer.name}"
+            if booking.service:
+                prefill_cart.append({
+                    'type': 'service',
+                    'id': booking.service.id,
+                    'name': f"{booking.service.name} (Lịch hẹn #{booking.id})",
+                    'price': booking.service.price,
+                    'quantity': 1,
+                    'booking_id': booking.id
+                })
+
+    return render_template('pos/index.html', 
+                           products=products, 
+                           services=services, 
+                           pets_for_sale=pets_for_sale,
+                           customers=customers,
+                           prefill_cart=prefill_cart,
+                           prefill_customer_identifier=prefill_customer_identifier)
+
+@pos_bp.route('/invoices')
+@login_required
+def list_invoices():
+    if current_user.role not in ['admin', 'receptionist']:
+        flash('Bạn không có quyền truy cập vào chức năng hóa đơn!', 'danger')
+        return redirect(url_for('dashboard.index'))
     
     # Lấy các tham số lọc
     search_id = request.args.get('search_id')
@@ -55,56 +90,11 @@ def index():
     # Tính tổng doanh thu hệ thống (dựa trên kết quả đã lọc)
     total_revenue = db.session.query(db.func.sum(Order.total_amount)).scalar() or 0
     
-    return render_template('pos/index.html', 
-                           products=products, 
-                           services=services, 
-                           customers=customers,
+    return render_template('pos/invoices.html', 
                            recent_orders=recent_orders,
                            orders_pagination=orders_pagination,
                            total_revenue=total_revenue,
                            filters=request.args)
-
-@pos_bp.route('/pos/apply_voucher', methods=['POST'])
-@login_required
-def apply_voucher():
-    data = request.get_json()
-    code = data.get('code')
-    customer_id = data.get('customer_id')
-    order_amount = data.get('order_amount', 0)
-    
-    voucher = Voucher.query.filter_by(code=code, is_active=True).first()
-    if not voucher:
-        return jsonify({'success': False, 'message': 'Mã giảm giá không hợp lệ hoặc đã hết hạn.'})
-    
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({'success': False, 'message': 'Không tìm thấy thông tin khách hàng.'})
-    
-    # Kiểm tra hạng (Gold, Platinum, Diamond, VIP mới được dùng)
-    allowed_tiers = ['Gold', 'Platinum', 'Diamond', 'VIP']
-    if customer.tier not in allowed_tiers:
-        return jsonify({'success': False, 'message': f'Mã giảm giá này chỉ dành cho hạng Vàng trở lên. Hạng hiện tại: {customer.tier}'})
-    
-    # Kiểm tra hạng tối thiểu của voucher
-    tier_priority = {'Standard': 0, 'Silver': 1, 'Gold': 2, 'Platinum': 3, 'Diamond': 4, 'VIP': 5}
-    if tier_priority.get(customer.tier, 0) < tier_priority.get(voucher.min_tier, 2):
-        return jsonify({'success': False, 'message': f'Hạng của bạn ({customer.tier}) chưa đủ để dùng mã này (Yêu cầu: {voucher.min_tier})'})
-
-    if order_amount < voucher.min_order_amount:
-        return jsonify({'success': False, 'message': f'Đơn hàng tối thiểu {voucher.min_order_amount:,.0f}đ để dùng mã này.'})
-        
-    discount = 0
-    if voucher.discount_type == 'fixed':
-        discount = voucher.discount_amount
-    else:
-        discount = (voucher.discount_amount / 100) * order_amount
-        
-    return jsonify({
-        'success': True, 
-        'discount_amount': discount,
-        'discount_percent': voucher.discount_amount if voucher.discount_type == 'percentage' else None,
-        'message': 'Áp dụng mã giảm giá thành công!'
-    })
 
 @pos_bp.route('/pos/checkout', methods=['POST'])
 @login_required
@@ -112,10 +102,16 @@ def checkout():
     try:
         # Nhận dữ liệu giỏ hàng dưới dạng JSON từ form ẩn
         cart_data_raw = request.form.get('cart_data')
-        customer_id_raw = request.form.get('customer_id')
-        customer_id = int(customer_id_raw) if customer_id_raw and customer_id_raw.strip() else None
+        customer_identifier = request.form.get('customer_identifier')
+        customer_id = None
+        
+        if customer_identifier and ' - ' in customer_identifier:
+            phone = customer_identifier.split(' - ')[0].strip()
+            customer = Customer.query.filter_by(phone=phone).first()
+            if customer:
+                customer_id = customer.id
+
         payment_method = request.form.get('payment_method', 'Cash')
-        coupon_code = request.form.get('coupon_code')
         
         if not cart_data_raw:
             flash('Giỏ hàng trống!', 'danger')
@@ -127,24 +123,8 @@ def checkout():
             return redirect(url_for('pos.index'))
             
         subtotal = sum(float(item['price']) * int(item['quantity']) for item in cart_items)
-        discount = 0
         
-        # Áp dụng voucher nếu có
-        if coupon_code and customer_id:
-            voucher = Voucher.query.filter_by(code=coupon_code, is_active=True).first()
-            customer = Customer.query.get(customer_id)
-            if voucher and customer:
-                # Re-validate logic for security
-                allowed_tiers = ['Gold', 'Platinum', 'Diamond', 'VIP']
-                tier_priority = {'Standard': 0, 'Silver': 1, 'Gold': 2, 'Platinum': 3, 'Diamond': 4, 'VIP': 5}
-                if customer.tier in allowed_tiers and tier_priority.get(customer.tier, 0) >= tier_priority.get(voucher.min_tier, 2):
-                    if subtotal >= voucher.min_order_amount:
-                        if voucher.discount_type == 'fixed':
-                            discount = voucher.discount_amount
-                        else:
-                            discount = (voucher.discount_amount / 100) * subtotal
-        
-        total_amount = max(0, subtotal - discount)
+        total_amount = max(0, subtotal)
         
         # Tạo Order
         new_order = Order(
@@ -157,21 +137,53 @@ def checkout():
         db.session.add(new_order)
         db.session.flush() # Lấy order.id
         
+        booking_ids_to_update = set()
+        
         # Tạo Order Items
         for item in cart_items:
             product_id = item['id'] if item['type'] == 'product' else None
             service_id = item['id'] if item['type'] == 'service' else None
+            pet_sale_id = item['id'] if item['type'] == 'pet' else None
+            
+            if 'booking_id' in item and item['booking_id']:
+                booking_ids_to_update.add(item['booking_id'])
             
             # Trừ kho nếu là sản phẩm
             if product_id:
                 product = Product.query.get(product_id)
                 if product:
                     product.stock_quantity = max(0, product.stock_quantity - int(item['quantity']))
+
+            # Xử lý thú cưng cần bán
+            if pet_sale_id:
+                from app.models import PetForSale, Pet
+                pet_sale = PetForSale.query.get(pet_sale_id)
+                qty_bought = int(item['quantity'])
+                if pet_sale and pet_sale.quantity > 0:
+                    pet_sale.quantity = max(0, pet_sale.quantity - qty_bought)
+                    if pet_sale.quantity <= 0:
+                        pet_sale.status = 'Sold'
+                    
+                    # Tự động tạo hồ sơ thú cưng cho khách hàng nếu có
+                    if customer_id:
+                        for i in range(qty_bought):
+                            suffix = f' #{i+1}' if qty_bought > 1 else ''
+                            new_customer_pet = Pet(
+                                customer_id=customer_id,
+                                name=pet_sale.name + suffix,
+                                species=pet_sale.species,
+                                breed=pet_sale.breed,
+                                health_notes=f"Mua từ cửa hàng (Mã ĐH: #{new_order.id}). {pet_sale.health_notes or ''}",
+                                source='store_purchase',
+                                purchase_order_id=new_order.id
+                            )
+                            db.session.add(new_customer_pet)
             
             order_item = OrderItem(
                 order_id=new_order.id,
                 product_id=product_id,
                 service_id=service_id,
+                pet_for_sale_id=pet_sale_id,
                 quantity=int(item['quantity']),
                 price=float(item['price'])
             )
@@ -179,11 +191,19 @@ def checkout():
             
         db.session.commit()
         
-        # Cập nhật hạng khách hàng
+        if booking_ids_to_update:
+            from app.models import Booking
+            for b_id in booking_ids_to_update:
+                booking = Booking.query.get(b_id)
+                if booking:
+                    booking.is_paid = True
+            db.session.commit()
+        
+        # Cập nhật tổng chi tiêu khách hàng
         if customer_id:
             customer = Customer.query.get(customer_id)
             if customer:
-                customer.update_tier()
+                customer.update_total_spent()
         
         flash(f'Thanh toán thành công! Mã hóa đơn: #{new_order.id}', 'success')
         return redirect(url_for('pos.index'))
@@ -192,3 +212,23 @@ def checkout():
         db.session.rollback()
         flash(f'Lỗi khi thanh toán: {str(e)}', 'danger')
         return redirect(url_for('pos.index'))
+
+@pos_bp.route('/invoices/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_invoice(id):
+    if current_user.role != 'admin':
+        flash('Chỉ Admin mới có quyền xóa hóa đơn!', 'danger')
+        return redirect(url_for('pos.list_invoices'))
+    
+    order = Order.query.get_or_404(id)
+    try:
+        # Xóa các item liên quan (đã có cascade delete trong model nếu config đúng, nhưng ta cứ xóa cho chắc hoặc để SQLAlchemy lo)
+        # Trong models.py: items = db.relationship('OrderItem', backref='order', cascade='all, delete-orphan') -> Nên nó tự xóa.
+        db.session.delete(order)
+        db.session.commit()
+        flash(f'Đã xóa hóa đơn #{id} thành công!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Lỗi khi xóa hóa đơn: {str(e)}', 'danger')
+        
+    return redirect(url_for('pos.list_invoices'))

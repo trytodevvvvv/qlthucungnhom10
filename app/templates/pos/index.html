@@ -35,6 +35,22 @@
                 {% endfor %}
             </div>
         </div>
+
+        <div style="margin-top: 32px;">
+            <h3>Thú cưng</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                {% for pet in pets_for_sale %}
+                <div class="card item-card" style="width: 140px; cursor: pointer; text-align: center; padding: 16px;"
+                     data-type="pet" data-id="{{ pet.id }}" data-name="{{ pet.name }}" data-price="{{ pet.price }}" data-max="{{ pet.quantity }}"
+                     onclick="handleAddToCart(this)">
+                    <div style="font-size: 1.5rem; color: #ff8f00;"><i class="fa-solid fa-cat"></i></div>
+                    <div style="font-weight: 500; margin-top: 8px; font-size: 0.9rem;">{{ pet.name }}</div>
+                    <div style="color: var(--primary-dark); font-weight: bold; margin-top: 4px;">{{ "{:,.0f}".format(pet.price) }}đ</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Còn lại: {{ pet.quantity }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
     <!-- Bên phải: Hóa đơn (Giỏ hàng) -->
@@ -60,22 +76,14 @@
             
             <div class="form-group">
                 <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Khách hàng (Không bắt buộc)</label>
-                <select name="customer_id" id="customer_id" class="form-control" style="padding: 8px;">
-                    <option value="">Khách vãng lai</option>
+                <input type="text" name="customer_identifier" id="customer_identifier" list="pos_customers_list" class="form-control" placeholder="Khách vãng lai hoặc nhập tên..." autocomplete="off" style="padding: 8px;">
+                <datalist id="pos_customers_list">
                     {% for c in customers %}
-                    <option value="{{ c.id }}" data-tier="{{ c.tier }}">{{ c.name }} ({{ c.phone }})</option>
+                    <option value="{{ c.phone }} - {{ c.name }}"></option>
                     {% endfor %}
-                </select>
+                </datalist>
             </div>
 
-            <div class="form-group">
-                <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Mã giảm giá (Dành cho hạng Vàng+)</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" name="coupon_code" id="coupon_code" class="form-control" placeholder="Nhập mã..." style="padding: 8px;">
-                    <button type="button" class="btn" style="background: #eee; padding: 0 12px;" onclick="applyVoucher()">Áp dụng</button>
-                </div>
-                <div id="voucher-msg" style="font-size: 0.8rem; margin-top: 4px; display: none;"></div>
-            </div>
 
             <div class="form-group">
                 <label style="font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; display: block;">Phương thức thanh toán</label>
@@ -120,117 +128,7 @@
 }
 </style>
 
-<!-- Phần Lịch sử giao dịch và Tổng tiền -->
-<div style="margin-top: 48px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3>Lịch sử giao dịch (10 đơn gần nhất)</h3>
-        <div class="card" style="padding: 10px 20px; background: #e8f5e9; border-color: #c8e6c9;">
-            <span style="font-weight: 500; color: #2e7d32;">Tổng doanh thu hệ thống: </span>
-            <span style="font-size: 1.2rem; font-weight: bold; color: #1b5e20;">{{ "{:,.0f}".format(total_revenue) }}đ</span>
-        </div>
-    </div>
-    <div class="card" style="margin-bottom: 24px; padding: 20px; background: #fdfdfd;">
-        <form method="GET" action="{{ url_for('pos.index') }}#transaction-history" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; align-items: end;">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Mã hóa đơn</label>
-                <input type="text" name="search_id" class="form-control" style="padding: 8px;" value="{{ filters.search_id or '' }}" placeholder="#123">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Tên khách hàng</label>
-                <input type="text" name="customer_name" class="form-control" style="padding: 8px;" value="{{ filters.customer_name or '' }}" placeholder="Nguyễn Văn A">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Phương thức</label>
-                <select name="payment_method" class="form-control" style="padding: 8px;">
-                    <option value="">Tất cả</option>
-                    <option value="Cash" {% if filters.payment_method == 'Cash' %}selected{% endif %}>Tiền mặt</option>
-                    <option value="Banking" {% if filters.payment_method == 'Banking' %}selected{% endif %}>Chuyển khoản</option>
-                    <option value="Card" {% if filters.payment_method == 'Card' %}selected{% endif %}>Thẻ</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Giá từ</label>
-                <input type="number" name="min_price" class="form-control" style="padding: 8px;" value="{{ filters.min_price or '' }}" placeholder="0">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Đến giá</label>
-                <input type="number" name="max_price" class="form-control" style="padding: 8px;" value="{{ filters.max_price or '' }}" placeholder="999,999">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Từ ngày</label>
-                <input type="date" name="start_date" class="form-control" style="padding: 8px;" value="{{ filters.start_date or '' }}">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #666; margin-bottom: 4px; display: block;">Đến ngày</label>
-                <input type="date" name="end_date" class="form-control" style="padding: 8px;" value="{{ filters.end_date or '' }}">
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn btn-primary" style="padding: 8px 16px; flex: 1;"><i class="fa-solid fa-filter"></i> Lọc</button>
-                <a href="{{ url_for('pos.index') }}#transaction-history" class="btn" style="padding: 8px 16px; background: #eee; color: #666;"><i class="fa-solid fa-rotate-left"></i></a>
-            </div>
-        </form>
-    </div>
-    <div class="card">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Mã đơn</th>
-                    <th>Khách hàng</th>
-                    <th>Ngày giờ</th>
-                    <th>Phương thức</th>
-                    <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in recent_orders %}
-                <tr>
-                    <td>#{{ order.id }}</td>
-                    <td>{{ order.customer.name if order.customer else 'Khách vãng lai' }}</td>
-                    <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td>
-                        {% if order.payment_method == 'Cash' %}Tiền mặt
-                        {% elif order.payment_method == 'Banking' %}Chuyển khoản
-                        {% else %}Thẻ{% endif %}
-                    </td>
-                    <td style="font-weight: bold; color: var(--primary-dark);">{{ "{:,.0f}".format(order.total_amount) }}đ</td>
-                    <td><span class="badge" style="background: #e8f5e9; color: #2e7d32;">Hoàn thành</span></td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted);">Chưa có giao dịch nào</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
 
-        <!-- Pagination -->
-        {% if orders_pagination.pages > 1 %}
-        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px; padding-bottom: 8px;">
-            {% if orders_pagination.has_prev %}
-            <a href="{{ url_for('pos.index', page=orders_pagination.prev_num, search_id=filters.search_id, customer_name=filters.customer_name, payment_method=filters.payment_method, min_price=filters.min_price, max_price=filters.max_price, start_date=filters.start_date, end_date=filters.end_date) }}#transaction-history" class="btn" style="background: #eee;">Trước</a>
-            {% endif %}
-
-            {% for p in orders_pagination.iter_pages() %}
-                {% if p %}
-                    <a href="{{ url_for('pos.index', page=p, search_id=filters.search_id, customer_name=filters.customer_name, payment_method=filters.payment_method, min_price=filters.min_price, max_price=filters.max_price, start_date=filters.start_date, end_date=filters.end_date) }}#transaction-history" 
-                       class="btn pagination-btn {% if p == orders_pagination.page %}active{% endif %}">
-                        {{ p }}
-                    </a>
-                {% else %}
-                    <span style="padding: 8px;">...</span>
-                {% endif %}
-            {% endfor %}
-
-            {% if orders_pagination.has_next %}
-            <a href="{{ url_for('pos.index', page=orders_pagination.next_num, search_id=filters.search_id, customer_name=filters.customer_name, payment_method=filters.payment_method, min_price=filters.min_price, max_price=filters.max_price, start_date=filters.start_date, end_date=filters.end_date) }}#transaction-history" class="btn" style="background: #eee;">Sau</a>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<div id="transaction-history"></div>
 
 <style>
     .item-card { transition: transform 0.1s, box-shadow 0.1s; border: 1px solid var(--border); }
@@ -242,89 +140,50 @@
     .cart-item-qty { width: 40px; text-align: center; border: 1px solid var(--border); border-radius: 4px; outline: none; }
 </style>
 
+<script id="prefill-cart-data" type="application/json">
+{{ (prefill_cart if prefill_cart else []) | tojson | safe }}
+</script>
+<script id="prefill-customer-data" type="application/json">
+{{ (prefill_customer_identifier if prefill_customer_identifier else '') | tojson | safe }}
+</script>
+
 <script>
     let cart = [];
-    let appliedDiscount = 0;
-    let currentVoucher = null;
-
-    async function applyVoucher(providedCode = null) {
-        const codeInput = document.getElementById('coupon_code');
-        if (providedCode) codeInput.value = providedCode;
-        
-        const code = codeInput.value;
-        const customerId = document.getElementById('customer_id').value;
-        const msgDiv = document.getElementById('voucher-msg');
-        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-        if (!code) {
-            msgDiv.style.display = 'none';
-            appliedDiscount = 0;
-            currentVoucher = null;
-            updateCartUI();
-            return;
+    
+    try {
+        const cartDataContent = document.getElementById('prefill-cart-data').textContent;
+        const parsedCart = JSON.parse(cartDataContent);
+        if (Array.isArray(parsedCart)) {
+            cart = parsedCart;
         }
-
-        if (!customerId) {
-            msgDiv.innerText = 'Vui lòng chọn khách hàng trước!';
-            msgDiv.style.color = '#d32f2f';
-            msgDiv.style.display = 'block';
-            return;
-        }
-
-        try {
-            const response = await fetch('/pos/apply_voucher', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({code, customer_id: customerId, order_amount: total})
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                appliedDiscount = data.discount_amount;
-                currentVoucher = code;
-                let percentText = data.discount_percent ? ` (${data.discount_percent}%)` : '';
-                msgDiv.innerText = `Đã áp dụng: Giảm ${appliedDiscount.toLocaleString()}đ${percentText}`;
-                msgDiv.style.color = '#2e7d32';
-                msgDiv.style.display = 'block';
-            } else {
-                appliedDiscount = 0;
-                currentVoucher = null;
-                msgDiv.innerText = data.message;
-                msgDiv.style.color = '#d32f2f';
-                msgDiv.style.display = 'block';
-            }
-            updateCartUI();
-        } catch (e) {
-            console.error(e);
-        }
+    } catch (e) {
+        console.error("Lỗi đọc dữ liệu giỏ hàng:", e);
     }
 
-    // Tự động áp mã khi chọn khách hàng
-    document.getElementById('customer_id').addEventListener('change', async function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const tier = selectedOption.getAttribute('data-tier');
-        
-        // Reset mã cũ
-        document.getElementById('coupon_code').value = '';
-        appliedDiscount = 0;
-        currentVoucher = null;
-        document.getElementById('voucher-msg').style.display = 'none';
-        
-        if (tier === 'Gold') {
-            await applyVoucher('GOLD5');
-        } else if (tier === 'Platinum') {
-            await applyVoucher('PLATINUM10');
-        } else if (tier === 'Diamond' || tier === 'VIP') {
-            await applyVoucher('VIP20');
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const custDataContent = document.getElementById('prefill-customer-data').textContent;
+            const custName = JSON.parse(custDataContent);
+            if (custName) {
+                const custInput = document.getElementById('customer_identifier');
+                if (custInput) {
+                    custInput.value = custName;
+                }
+            }
+        } catch (e) {
+            console.error("Lỗi đọc dữ liệu khách hàng:", e);
         }
-        updateCartUI();
+        
+        if (cart.length > 0) {
+            updateCartUI();
+        }
     });
 
     // Mở Modal thanh toán
     function openPaymentModal() {
         const method = document.getElementById('payment_method').value;
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const total = subtotal - appliedDiscount;
+        const total = subtotal;
         const modal = document.getElementById('payment-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalBody = document.getElementById('modal-body');
@@ -333,28 +192,11 @@
         modal.style.display = 'flex';
         
         let content = `<div style="margin-bottom: 20px;">`;
-        if (appliedDiscount > 0) {
-            content += `
-                <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #666; margin-bottom: 4px;">
-                    <span>Tổng tiền:</span>
-                    <span>${subtotal.toLocaleString()}đ</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #d32f2f; margin-bottom: 8px;">
-                    <span>Giảm giá:</span>
-                    <span>-${appliedDiscount.toLocaleString()}đ</span>
-                </div>
-                <div style="border-top: 1px dashed #eee; padding-top: 8px; display: flex; justify-content: space-between; font-size: 1.4rem; font-weight: bold; color: var(--primary-dark);">
-                    <span>Cần thu:</span>
-                    <span>${total.toLocaleString()}đ</span>
-                </div>
-            `;
-        } else {
-            content += `
-                <div style="font-size: 1.6rem; font-weight: bold; color: var(--primary-dark);">
-                    ${total.toLocaleString()}đ
-                </div>
-            `;
-        }
+        content += `
+            <div style="font-size: 1.6rem; font-weight: bold; color: var(--primary-dark);">
+                ${total.toLocaleString()}đ
+            </div>
+        `;
         content += `</div>`;
 
         if (method === 'Banking') {
@@ -433,7 +275,8 @@
         const id = parseInt(element.getAttribute('data-id'));
         const name = element.getAttribute('data-name');
         const price = parseFloat(element.getAttribute('data-price'));
-        addToCart(type, id, name, price);
+        const max = parseInt(element.getAttribute('data-max')) || 9999;
+        addToCart(type, id, name, price, max);
     }
 
     function updateCartUI() {
@@ -450,10 +293,6 @@
             cartInput.value = '[]';
             btnCheckout.disabled = true;
             document.getElementById('qr-container-preview').style.display = 'none';
-            appliedDiscount = 0;
-            currentVoucher = null;
-            document.getElementById('voucher-msg').style.display = 'none';
-            document.getElementById('coupon_code').value = '';
             return;
         }
 
@@ -471,40 +310,45 @@
                     <div style="color: var(--text-muted); font-size: 0.8rem;">${(item.price).toLocaleString()}đ</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="number" class="cart-item-qty" min="1" value="${item.quantity}" onchange="updateQty(${index}, this.value)">
+                    <input type="number" class="cart-item-qty" min="1" max="${item.max || ''}" value="${item.quantity}" onchange="updateQty(${index}, this.value, ${item.max || 9999})">
                     <button type="button" class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: #ffe5e5; color: #d32f2f; margin-left:8px;" onclick="removeFromCart(${index})"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
             container.appendChild(div);
         });
 
-        const total = subtotal - appliedDiscount;
+        const total = subtotal;
         updateQRPreview(total);
         
-        if (appliedDiscount > 0) {
-            totalSpan.innerHTML = `<span style="font-size: 0.85rem; text-decoration: line-through; color: #999;">${subtotal.toLocaleString()}đ</span> ${total.toLocaleString()}đ`;
-        } else {
-            totalSpan.textContent = total.toLocaleString() + 'đ';
-        }
+        totalSpan.textContent = total.toLocaleString() + 'đ';
 
         cartInput.value = JSON.stringify(cart);
         btnCheckout.disabled = false;
     }
 
-    function addToCart(type, id, name, price) {
+    function addToCart(type, id, name, price, max) {
         const existingItem = cart.find(i => i.type === type && i.id === id);
         if (existingItem) {
-            existingItem.quantity += 1;
+            if (existingItem.quantity < max) {
+                existingItem.quantity += 1;
+            } else {
+                showNotification(`Đã đạt số lượng tối đa trong kho`, 'danger');
+                return;
+            }
         } else {
-            cart.push({ type, id, name, price, quantity: 1 });
+            cart.push({ type, id, name, price, quantity: 1, max: max });
         }
         updateCartUI();
         showNotification(`Đã thêm "${name}" vào giỏ hàng`, 'success');
     }
 
-    function updateQty(index, newQty) {
+    function updateQty(index, newQty, maxQty) {
         let val = parseInt(newQty);
         if (isNaN(val) || val < 1) val = 1;
+        if (val > maxQty) {
+            val = maxQty;
+            showNotification(`Số lượng tối đa là ${maxQty}`, 'warning');
+        }
         cart[index].quantity = val;
         updateCartUI();
     }
