@@ -28,6 +28,9 @@ class User(BaseModel, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def __repr__(self):
+        return f'<User {self.username}>'
+
 class Customer(BaseModel):
     __tablename__ = 'customers'
     id = db.Column(db.Integer, primary_key=True)
@@ -46,6 +49,9 @@ class Customer(BaseModel):
         self.total_spent = total
         db.session.commit()
 
+    def __repr__(self):
+        return f'<Customer {self.name}>'
+
 class Pet(BaseModel):
     __tablename__ = 'pets'
     id = db.Column(db.Integer, primary_key=True)
@@ -62,6 +68,9 @@ class Pet(BaseModel):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     purchase_order = db.relationship('Order', backref='purchased_pets', foreign_keys=[purchase_order_id])
+
+    def __repr__(self):
+        return f'<Pet {self.name}>'
 
 class PetForSale(BaseModel):
     __tablename__ = 'pets_for_sale'
@@ -96,6 +105,9 @@ class Product(BaseModel):
     stock_quantity = db.Column(db.Integer, default=0)
     image = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def __repr__(self):
+        return f'<Product {self.name}>'
 
 class ServiceCategory(BaseModel):
     __tablename__ = 'service_categories'
